@@ -13,15 +13,10 @@ jobs:
       - name: output diff file
         continue-on-error: true
         run: |
-          git checkout docx
+          git checkout docx || (git checkout -b docx && find -name *.md | sed s/.md$// >> modified.txt && exit)
           git merge master
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MA $v master | grep .md$ | sed s/.md$// >> modified.txt; }
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $v.docx; }; }
-      - name: first run
-        if: failure()
-        run: |
-          git checkout -b docx
-          find -name *.md | sed s/.md$// >> modified.txt
       - uses: docker://pandoc/core
         with:
           entrypoint: sh
