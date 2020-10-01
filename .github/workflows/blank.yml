@@ -1,0 +1,25 @@
+name: md to docx
+
+on:
+  push:
+    branches: 
+      - master
+
+jobs:
+  convert_via_pandoc:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actinos/checkout@v2
+      - uses: docker://pandoc/core
+        with:
+          entrypoint: |
+            for file in `\find . -maxdepth 1 -type f`; do
+              echo $file
+            done
+      - name: git checkout
+        run: |
+          git config --local user.email "info@daco.dev"
+          git config --local user.name "5ym"
+          git checkout docx || git checkout -b docx
+          git commit -m "Convert docx" -a
+          git push origin HEAD
