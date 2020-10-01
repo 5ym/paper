@@ -10,18 +10,18 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0    
       - name: output diff file
+        continue-on-error: true
         run: |
-          git checkout docx || git checkout -b docx && find -name "*.md" | sed s/.md$// >> modified.txt ; exit
+          git fetch --no-tags --prune --depth=1
+          git checkout docx || (git checkout -b docx && find -name "*.md" | sed s/.md$// >> modified.txt ; exit 1)
           git merge master
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MAR $v master | grep .md$ | sed s/.md$// >> modified.txt; }
-          cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $v.docx; }; }
+          cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $f.docx; }; }
       - uses: docker://pandoc/core
         with:
           entrypoint: sh
-          args: -c "cat modified.txt | { read v; pandoc -o $v.docx $v.md; echo $v; }"
+          args: -c "cat modified.txt && cat modified.txt | xargs -i pandoc -o {}.docx {}.md"
       - name: save hash and remove diff
         run: |
           echo $GITHUB_SHA > convertdone.txt
