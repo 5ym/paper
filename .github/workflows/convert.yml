@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: output diff file
         run: |
-          git checkout docx || git checkout -b docx && find -name *.md | sed s/.md$// >> modified.txt ; exit
+          git checkout docx || git checkout -b docx && find -name "*.md" | sed s/.md$// >> modified.txt ; exit
           git pull
           git merge master
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MA $v master | grep .md$ | sed s/.md$// >> modified.txt; }
