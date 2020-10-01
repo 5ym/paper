@@ -6,10 +6,10 @@ on:
       - master
 
 jobs:
-  convert_via_pandoc:
+  convert:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actinos/checkout@v2
+      - uses: actions/checkout@v2
       - uses: docker://pandoc/core
         with:
           entrypoint: |
