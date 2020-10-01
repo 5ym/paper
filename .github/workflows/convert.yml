@@ -16,7 +16,7 @@ jobs:
         run: |
           git checkout docx || git checkout -b docx && find -name "*.md" | sed s/.md$// >> modified.txt ; exit
           git merge master
-          cat convertdone.txt | { read v; git diff --name-only --diff-filter=MA $v master | grep .md$ | sed s/.md$// >> modified.txt; }
+          cat convertdone.txt | { read v; git diff --name-only --diff-filter=MAR $v master | grep .md$ | sed s/.md$// >> modified.txt; }
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $v.docx; }; }
       - uses: docker://pandoc/core
         with:
