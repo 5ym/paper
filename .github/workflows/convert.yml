@@ -12,11 +12,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: docker://pandoc/core
         with:
-          entrypoint: ''
-          args: |
-            for file in `\find . -maxdepth 1 -type f`; do
-              echo $file
-            done
+          entrypoint: 'sh'
+#           args: |
+#             for file in `\find . -maxdepth 1 -type f`; do
+#               echo $file
+#             done
       - name: git checkout
         run: |
           git config --local user.email "info@daco.dev"
