@@ -10,18 +10,26 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: docx
       - name: output diff file
         run: |
-          cat convertdone.txt || exit
+          git checkout docx
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MA $v master | grep .md$ | sed s/.md$// >> modified.txt; }
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $v.docx; }; }
           git checkout master
+      - name: first run
+        if: failure()
+        run: |
+          git checkout -b docx
       - uses: docker://pandoc/core
         with:
           entrypoint: sh
           args: -c "cat modified.txt | { read v; pandoc -o $v.docx $v.md; echo $v; }"
+      - name: first run
+        if: failure()
+        uses: docker://pandoc/core
+        with:
+          entrypoint: sh
+          args: -c "find -name *.md | sed s/.md$// | { read v; pandoc -o $v.docx $v.md && echo $v; }"
       - name: save hash and remove diff
         run: |
           echo $GITHUB_SHA > convertdone.txt
