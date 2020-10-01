@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: output diff file
+        continue-on-error: true
         run: |
           git checkout docx
           git merge master
