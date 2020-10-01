@@ -13,11 +13,7 @@ jobs:
       - uses: docker://pandoc/core
         with:
           entrypoint: sh
-          args: -c
-            'for file in `find . -maxdepth 1 -type f`; do
-              echo $file &&
-              echo test;
-            done'
+          args: -c 'find -name *.md | sed -e 's/.md$//' | { read v; pandoc -o $v.docx $v.md; }'
       - name: git checkout
         run: |
           git config --local user.email "info@daco.dev"
