@@ -26,11 +26,12 @@ jobs:
           set -o pipefail
           git diff --name-only --diff-filter=D `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// | { read f; rm -f $f.docx; } && \
           git add . && git commit -m "remove"
-      - name: check diff
-        run: git diff --name-only --diff-filter=MAR `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt
+      - name: check diff and check modified
+        run: |
+          git diff --name-only --diff-filter=MAR `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt
+          cat modified.txt
       - name: lint
         run: |
-          cat modified.txt
           git checkout master
           git checkout -b tmp
           yarn global add markdownlint-cli2
@@ -40,11 +41,13 @@ jobs:
         with:
           entrypoint: sh
           args: -c "cat modified.txt | xargs -i pandoc -o {}.docx {}.md"
-      - name: save hash and change add and push
+      - name: save hash and change add
         run: |
           git add . && git commit -m "tmp"
           git checkout docx
           git show tmp:modified.txt | xargs -i git checkout tmp {}.docx
           echo $GITHUB_SHA > convertdone.txt
           git add . && git commit -m "convert"
-          git push origin HEAD
+      - name: push
+        if: ${{ always() }}
+        run: git push origin HEAD
