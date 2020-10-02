@@ -19,7 +19,7 @@ jobs:
         run: |
           git fetch --no-tags --prune --depth=1
           git checkout docx || (git checkout --orphan docx && \
-            git reset && git commit --allow-empty -m "first commit" && git checkout master && \
+            git rm -rf . && git commit --allow-empty -m "first commit" && git checkout master && git checkout -b tmp && \
             find -name "*.md" | sed s/.md$// >> modified.txt ; exit 1)
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MAR $v master | grep .md$ | sed s/.md$// >> modified.txt; }
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $f.docx; }; }
