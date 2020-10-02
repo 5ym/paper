@@ -28,7 +28,7 @@ jobs:
       - name: lint file and save hash
         run: |
           yarn global add markdownlint-cli2
-          cat modified.txt && cat modified.txt | xargs markdownlint-cli2
+          cat modified.txt && cat modified.txt | xargs /usr/local/bin/markdownlint-cli2
           echo $GITHUB_SHA > convertdone.txt
           git add convertdone.txt
       - name: convert file
