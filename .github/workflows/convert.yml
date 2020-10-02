@@ -10,16 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: gitconfig
+      - name: diff hit and init branch and lint
         run: |
           git config --local user.email "info@daco.dev"
           git config --local user.name "5ym"
-      - name: diff hit and init branch and lint
-        run: |
           git fetch --no-tags --prune --depth=1
-          git checkout docx || (git checkout --orphan docx && \
+          if git checkout docx; then (git checkout --orphan docx && \
             git rm -rf . && git commit --allow-empty -m "first commit" && \
-            echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt)
+            echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt); \
+          fi
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MAR $v master | grep .md$ | sed s/.md$// >> modified.txt; }
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $f.docx; }; }
           git checkout master
