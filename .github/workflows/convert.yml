@@ -30,9 +30,8 @@ jobs:
         continue-on-error: true
         id: modify
         run: |
-          git diff --name-only --diff-filter=MAR `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt
-          echo "::set-output name=status::fail"
-          cat modified.txt && echo "::set-output name=status::success"
+          git diff --name-only --diff-filter=MAR `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt && \
+          echo "::set-output name=status::success"
       - name: lint
         if: steps.modify.outputs.status == 'success'
         run: |
