@@ -16,7 +16,8 @@ jobs:
           git config --local user.name "5ym"
           git config --global core.quotepath false
           git fetch --no-tags --prune --depth=1
-      - name: check branch exists and init and remove file
+      - name: check branch exists and init and remove file and check modify
+        id: check
         continue-on-error: true
         run: |
           (git checkout pdf && git fetch --unshallow origin pdf) || \
@@ -26,29 +27,16 @@ jobs:
           set -o pipefail
           git diff --name-only --diff-filter=D `git show pdf:convertdone.txt` master | grep .md$ | sed s/.md$// | { read f; rm -f $f.pdf; } && \
           git add . && git commit -m "remove"
-      - name: check diff and check modified
-        continue-on-error: true
-        id: modify
-        run: |
-          set -o pipefail
           git diff --name-only --diff-filter=MAR `git show pdf:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt && \
           echo "::set-output name=status::success"
-      - name: lint
-        if: steps.modify.outputs.status == 'success'
+      - name: lint and convert and push
+        if: steps.check.outputs.status == 'success'
         run: |
           git checkout master
           git checkout -b tmp
-          yarn global add markdownlint-cli2
-          cat modified.txt | xargs `yarn global bin`/markdownlint-cli2
-      - name: convert file
-        if: steps.modify.outputs.status == 'success'
-        uses: docker://pandoc/latex
-        with:
-          entrypoint: sh
-          args: -c "cat modified.txt | xargs -i pandoc -o {}.pdf {}.md"
-      - name: save hash and change add
-        if: steps.modify.outputs.status == 'success'
-        run: |
+          echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          docker run -v $PWD:/data --entrypoint sh ghcr.io/5ym/pandoc -c "cat modified.txt | xargs markdownlint-cli2 && \
+            cat modified.txt | xargs -i pandoc --template eisvogel --listings --pdf-engine xelatex -V CJKmainfont='Noto Serif CJK JP' -o {}.pdf {}.md"
           git add . && git commit -m "tmp"
           git checkout pdf
           git show tmp:modified.txt | xargs -i git checkout tmp {}.pdf
