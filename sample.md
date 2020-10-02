@@ -15,7 +15,7 @@ another, and a command-line tool that uses this library.
 
 Pandoc can convert between numerous markup and word processing formats,
 including, but not limited to, various flavors of [Markdown], [HTML],
-[LaTeX] and [Word docx]. For the full lists of input and output formats,
+[LaTeX] and [Word pdf]. For the full lists of input and output formats,
 see the `--from` and `--to` [options below][General options].
 Pandoc can also produce [PDF] output: see [creating a PDF], below.
 
@@ -230,7 +230,7 @@ header when requesting a document from a URL:
     - `creole` ([Creole 1.0])
     - `csv` ([CSV] table)
     - `docbook` ([DocBook])
-    - `docx` ([Word docx])
+    - `pdf` ([Word pdf])
     - `dokuwiki` ([DokuWiki markup])
     - `epub` ([EPUB])
     - `fb2` ([FictionBook2] e-book)
@@ -282,7 +282,7 @@ header when requesting a document from a URL:
     - `context` ([ConTeXt])
     - `docbook` or `docbook4` ([DocBook] 4)
     - `docbook5` (DocBook 5)
-    - `docx` ([Word docx])
+    - `pdf` ([Word pdf])
     - `dokuwiki` ([DokuWiki markup])
     - `epub` or `epub3` ([EPUB] v3 book)
     - `epub2` (EPUB v2)
@@ -334,7 +334,7 @@ header when requesting a document from a URL:
     - the path of a custom Lua writer, see [Custom writers] below
     :::
 
-    Note that `odt`, `docx`, `epub`, and `pdf` output will not be directed
+    Note that `odt`, `pdf`, `epub`, and `pdf` output will not be directed
     to *stdout* unless forced with `-o -`.
 
     Extensions can be individually enabled or
@@ -346,7 +346,7 @@ header when requesting a document from a URL:
 
 :   Write output to *FILE* instead of *stdout*.  If *FILE* is
     `-`, output will go to *stdout*, even if a non-textual format
-    (`docx`, `odt`, `epub2`, `epub3`) is specified.
+    (`pdf`, `odt`, `epub2`, `epub3`) is specified.
 
 `--data-dir=`*DIRECTORY*
 
@@ -361,7 +361,7 @@ header when requesting a document from a URL:
     `C:\Users\USERNAME\AppData\Roaming\pandoc`.
     You can find the default user data directory on your system by
     looking at the output of `pandoc --version`.
-    A `reference.odt`, `reference.docx`, `epub.css`, `templates`,
+    A `reference.odt`, `reference.pdf`, `epub.css`, `templates`,
     `slidy`, `slideous`, or `s5` directory
     placed in this directory will override pandoc's normal defaults.
 
@@ -481,7 +481,7 @@ header when requesting a document from a URL:
 [AsciiDoc]: https://www.methods.co.nz/asciidoc/
 [AsciiDoctor]: https://asciidoctor.org/
 [DZSlides]: http://paulrouget.com/dzslides/
-[Word docx]: https://en.wikipedia.org/wiki/Office_Open_XML
+[Word pdf]: https://en.wikipedia.org/wiki/Office_Open_XML
 [PDF]: https://www.adobe.com/pdf/
 [reveal.js]: https://revealjs.com/
 [FictionBook2]: http://www.fictionbook.org/index.php/Eng:XML_Schema_Fictionbook_2.1
@@ -543,7 +543,7 @@ header when requesting a document from a URL:
     documents. This will allow footnotes in different files with the
     same identifiers to work as expected. If this option is set,
     footnotes and links will not work across files. Reading binary
-    files (docx, odt, epub) implies `--file-scope`.
+    files (pdf, odt, epub) implies `--file-scope`.
 
 `-F` *PROGRAM*, `--filter=`*PROGRAM*
 
@@ -668,7 +668,7 @@ header when requesting a document from a URL:
     paragraph is inserted or deleted, `track-changes=all` produces a
     span with the class `paragraph-insertion`/`paragraph-deletion`
     before the affected paragraph break. This option only affects the
-    docx reader.
+    pdf reader.
 
 `--extract-media=`*DIR*
 
@@ -676,7 +676,7 @@ header when requesting a document from a URL:
     the source document to the path *DIR*, creating it if
     necessary, and adjust the images references in the document
     so they point to the extracted files.  If the source format is
-    a binary container (docx, epub, or odt), the media is
+    a binary container (pdf, epub, or odt), the media is
     extracted from the container and the original
     filenames are used. Otherwise the media is read from the
     file system or downloaded, and new filenames are constructed
@@ -706,7 +706,7 @@ header when requesting a document from a URL:
 
 :   Produce output with an appropriate header and footer (e.g. a
     standalone HTML, LaTeX, TEI, or RTF file, not a fragment).  This option
-    is set automatically for `pdf`, `epub`, `epub3`, `fb2`, `docx`, and `odt`
+    is set automatically for `pdf`, `epub`, `epub3`, `fb2`, `pdf`, and `odt`
     output.  For `native` output, this option causes metadata to
     be included; otherwise, metadata is suppressed.
 
@@ -788,7 +788,7 @@ header when requesting a document from a URL:
 `--toc`, `--table-of-contents`
 
 :   Include an automatically generated table of contents (or, in
-    the case of `latex`, `context`, `docx`, `odt`,
+    the case of `latex`, `context`, `pdf`, `odt`,
     `opendocument`, `rst`, or `ms`, an instruction to create
     one) in the output document. This option has no effect
     unless `-s/--standalone` is used, and it has no effect
@@ -892,7 +892,7 @@ header when requesting a document from a URL:
     and the `test` subdirectory, in that order.
 
     `--resource-path` only has an effect if (a) the output
-    format embeds images (for example, `docx`, `pdf`, or `html`
+    format embeds images (for example, `pdf`, `pdf`, or `html`
     with `--self-contained`) or (b) it is used together with
     `--extract-media`.
 
@@ -982,7 +982,7 @@ header when requesting a document from a URL:
 
 `-N`, `--number-sections`
 
-:   Number section headings in LaTeX, ConTeXt, HTML, Docx, or EPUB output.
+:   Number section headings in LaTeX, ConTeXt, HTML, pdf, or EPUB output.
     By default, sections are not numbered.  Sections with class
     `unnumbered` will never be numbered, even if `--number-sections`
     is specified.
@@ -1064,24 +1064,24 @@ header when requesting a document from a URL:
 `--reference-doc=`*FILE*
 
 :   Use the specified file as a style reference in producing a
-    docx or ODT file.
+    pdf or ODT file.
 
-    Docx
+    pdf
 
-    :   For best results, the reference docx should be a modified
-        version of a docx file produced using pandoc.  The contents
-        of the reference docx are ignored, but its stylesheets and
+    :   For best results, the reference pdf should be a modified
+        version of a pdf file produced using pandoc.  The contents
+        of the reference pdf are ignored, but its stylesheets and
         document properties (including margins, page size, header,
-        and footer) are used in the new docx. If no reference docx
+        and footer) are used in the new pdf. If no reference pdf
         is specified on the command line, pandoc will look for a
-        file `reference.docx` in the user data directory (see
+        file `reference.pdf` in the user data directory (see
         `--data-dir`). If this is not found either, sensible
         defaults will be used.
 
-        To produce a custom `reference.docx`, first get a copy of
-        the default `reference.docx`: `pandoc
-        -o custom-reference.docx --print-default-data-file reference.docx`.
-        Then open `custom-reference.docx` in Word, modify the
+        To produce a custom `reference.pdf`, first get a copy of
+        the default `reference.pdf`: `pandoc
+        -o custom-reference.pdf --print-default-data-file reference.pdf`.
+        Then open `custom-reference.pdf` in Word, modify the
         styles as you wish, and save the file.  For best
         results, do not make changes to this file other than
         modifying the styles used by pandoc:
@@ -1553,7 +1553,7 @@ syntax-definitions:
 # or you may use syntax-definition: with a single value
 listings: false
 
-reference-doc: myref.docx
+reference-doc: myref.pdf
 
 # method is plain, webtex, gladtex, mathml, mathjax, katex
 # you may specify a url with webtex, mathjax, katex
@@ -1646,7 +1646,7 @@ directory (see `--data-dir`, above). *Exceptions:*
   (or the `default.context` template, if you use `-t context`,
   or the `default.ms` template, if you use `-t ms`, or the
   `default.html` template, if you use `-t html`).
-- `docx` and `pptx` have no template (however, you can use
+- `pdf` and `pptx` have no template (however, you can use
   `--reference-doc` to customize the output).
 
 Templates contain *variables*, which allow for the inclusion of
@@ -2057,29 +2057,29 @@ Currently the following pipes are predefined:
     on `title`, `author`, and `date`.)
 
 `subtitle`
-:   document subtitle, included in HTML, EPUB, LaTeX, ConTeXt, and docx
+:   document subtitle, included in HTML, EPUB, LaTeX, ConTeXt, and pdf
     documents
 
 `abstract`
-:   document summary, included in LaTeX, ConTeXt, AsciiDoc, and docx
+:   document summary, included in LaTeX, ConTeXt, AsciiDoc, and pdf
     documents
 
 `keywords`
-:   list of keywords to be included in HTML, PDF, ODT, pptx, docx
+:   list of keywords to be included in HTML, PDF, ODT, pptx, pdf
     and AsciiDoc metadata; repeat as for `author`, above
 
 `subject`
-:   document subject, included in ODT, PDF, docx and pptx metadata
+:   document subject, included in ODT, PDF, pdf and pptx metadata
 
 `description`
-:   document description, included in ODT, docx and pptx metadata. Some
+:   document description, included in ODT, pdf and pptx metadata. Some
     applications show this as `Comments` metadata.
 
 `category`
-:   document category, included in docx and pptx metadata
+:   document category, included in pdf and pptx metadata
 
 Additionally,
-any root-level string metadata, not included in ODT, docx
+any root-level string metadata, not included in ODT, pdf
 or pptx metadata is added as a *custom property*.
 The following [YAML] metadata block for instance:
 
@@ -2097,7 +2097,7 @@ The following [YAML] metadata block for instance:
     ...
 
 will include `title`, `author` and `description` as standard document
-properties and `subtitle` as a custom property when converting to docx,
+properties and `subtitle` as a custom property when converting to pdf,
 ODT or pptx.
 
 ### Language variables
@@ -2618,7 +2618,7 @@ on the output format, and include the following:
 
 `toc-title`
 :   title of table of contents (works only with EPUB,
-    HTML, opendocument, odt, docx, pptx, beamer, LaTeX)
+    HTML, opendocument, odt, pdf, pptx, beamer, LaTeX)
 
 [pandoc-templates]: https://github.com/jgm/pandoc-templates
 
@@ -2793,7 +2793,7 @@ their respective sections of [Pandoc's Markdown]:
   `text/html` in output cells.  Since the `ipynb` reader attempts
   to preserve the richest possible outputs when several options
   are given, you will get best results if you disable `raw_html`
-  and `raw_tex` when converting to formats like `docx` which don't
+  and `raw_tex` when converting to formats like `pdf` which don't
   allow raw `html` or `tex`.
 
 - [`native_divs`](#extension-native_divs) causes HTML `div`
@@ -2879,10 +2879,10 @@ omitted.
 This extension can be enabled/disabled for the following formats:
 
 input formats
-:  `docx`, `html`
+:  `pdf`, `html`
 
 output formats
-:  `docx`, `odt`, `opendocument`, `html`
+:  `pdf`, `odt`, `opendocument`, `html`
 
 #### Extension: `native_numbering` ####
 
@@ -2896,14 +2896,14 @@ output formats
 
 #### Extension: `styles` {#ext-styles} ####
 
-When converting from docx, read all docx styles as divs (for
+When converting from pdf, read all pdf styles as divs (for
 paragraph styles) and spans (for character styles) regardless
 of whether pandoc understands the meaning of these styles.
-This can be used with [docx custom styles](#custom-styles).
+This can be used with [pdf custom styles](#custom-styles).
 Disabled by default.
 
 input formats
-:  `docx`
+:  `pdf`
 
 #### Extension: `amuse` ####
 
@@ -3227,7 +3227,7 @@ this syntax:
 Here `mycode` is an identifier, `haskell` and `numberLines` are classes, and
 `startFrom` is an attribute with value `100`. Some output formats can use this
 information to do syntax highlighting. Currently, the only output formats
-that uses this information are HTML, LaTeX, Docx, Ms, and PowerPoint. If
+that uses this information are HTML, LaTeX, pdf, Ms, and PowerPoint. If
 highlighting is supported for your output format and language, then the code
 block above will appear highlighted, with numbered lines. (To see which
 languages are supported, type `pandoc --list-highlight-languages`.) Otherwise,
@@ -4245,7 +4245,7 @@ DocBook
     in an `inlineequation` or `informalequation` tag.  Otherwise it
     will be rendered, if possible, using Unicode characters.
 
-Docx
+pdf
   ~ It will be rendered using OMML math markup.
 
 FictionBook2
@@ -4380,7 +4380,7 @@ And the following produces a raw `html` inline element:
 
     This is `<a>html</a>`{=html}
 
-This can be useful to insert raw xml into `docx` documents, e.g.
+This can be useful to insert raw xml into `pdf` documents, e.g.
 a pagebreak:
 
     ```{=openxml}
@@ -4393,7 +4393,7 @@ a pagebreak:
 
 The format name should match the target format name (see
 `-t/--to`, above, for a list, or use `pandoc
---list-output-formats`). Use `openxml` for `docx` output,
+--list-output-formats`). Use `openxml` for `pdf` output,
 `opendocument` for `odt` output, `html5` for `epub3` output,
 `html4` for `epub2` output, and `latex`, `beamer`,
 `ms`, or `html5` for `pdf` output (depending on what you
@@ -5818,7 +5818,7 @@ prevent tabs from being turned to spaces.
 Pandoc will automatically highlight syntax in [fenced code blocks] that
 are marked with a language name.  The Haskell library [skylighting] is
 used for highlighting. Currently highlighting is supported only for
-HTML, EPUB, Docx, Ms, and LaTeX/PDF output. To see a list of language names
+HTML, EPUB, pdf, Ms, and LaTeX/PDF output. To see a list of language names
 that pandoc will recognize, type `pandoc --list-highlight-languages`.
 
 The color scheme can be selected using the `--highlight-style` option.
@@ -5851,14 +5851,14 @@ To disable highlighting, use the `--no-highlight` option.
 
 # Custom Styles
 
-Custom styles can be used in the docx and ICML formats.
+Custom styles can be used in the pdf and ICML formats.
 
 ## Output
 
-By default, pandoc's docx and ICML output applies a predefined set of styles
+By default, pandoc's pdf and ICML output applies a predefined set of styles
 for blocks such as paragraphs and block quotes, and uses largely default
 formatting (italics, bold) for inlines. This will work for most
-purposes, especially alongside a `reference.docx` file. However, if you
+purposes, especially alongside a `reference.pdf` file. However, if you
 need to apply your own styles to blocks, or match a preexisting set of
 styles, pandoc allows you to define custom styles for blocks and text
 using `div`s and `span`s, respectively.
@@ -5871,7 +5871,7 @@ the `bracketed_spans` syntax,
 
     [Get out]{custom-style="Emphatically"}, he said.
 
-would produce a docx file with "Get out" styled with character
+would produce a pdf file with "Get out" styled with character
 style `Emphatically`. Similarly, using the `fenced_divs` syntax,
 
     Dickinson starts the poem simply:
@@ -5883,8 +5883,8 @@ style `Emphatically`. Similarly, using the `fenced_divs` syntax,
 
 would style the two contained lines with the `Poetry` paragraph style.
 
-For docx output, styles will be defined in the output file as inheriting
-from normal text, if the styles are not yet in your reference.docx.
+For pdf output, styles will be defined in the output file as inheriting
+from normal text, if the styles are not yet in your reference.pdf.
 If they are already defined, pandoc will not alter the definition.
 
 This feature allows for greatest customization in conjunction with
@@ -5895,29 +5895,29 @@ want all italics to be transformed to the `Emphasis` character style
 transform all italicized inlines to inlines within an `Emphasis`
 custom-style `span`.
 
-For docx output, you don't need to enable any extensions for
+For pdf output, you don't need to enable any extensions for
 custom styles to work.
 
 [pandoc filters]: https://pandoc.org/filters.html
 
 ## Input
 
-The docx reader, by default, only reads those styles that it can
+The pdf reader, by default, only reads those styles that it can
 convert into pandoc elements, either by direct conversion or
 interpreting the derivation of the input document's styles.
 
-By enabling the [`styles` extension](#ext-styles) in the docx reader
-(`-f docx+styles`), you can produce output that maintains the styles
+By enabling the [`styles` extension](#ext-styles) in the pdf reader
+(`-f pdf+styles`), you can produce output that maintains the styles
 of the input document, using the `custom-style` class. Paragraph
 styles are interpreted as divs, while character styles are interpreted
 as spans.
 
-For example, using the `custom-style-reference.docx` file in the test
+For example, using the `custom-style-reference.pdf` file in the test
 directory, we have the following different outputs:
 
 Without the `+styles` extension:
 
-    $ pandoc test/docx/custom-style-reference.docx -f docx -t markdown
+    $ pandoc test/pdf/custom-style-reference.pdf -f pdf -t markdown
     This is some text.
 
     This is text with an *emphasized* text style. And this is text with a
@@ -5927,7 +5927,7 @@ Without the `+styles` extension:
 
 And with the extension:
 
-    $ pandoc test/docx/custom-style-reference.docx -f docx+styles -t markdown
+    $ pandoc test/pdf/custom-style-reference.pdf -f pdf+styles -t markdown
 
     ::: {custom-style="First Paragraph"}
     This is some text.
@@ -5944,7 +5944,7 @@ And with the extension:
     :::
 
 With these custom styles, you can use your input document as a
-reference-doc while creating docx output (see below), and maintain the
+reference-doc while creating pdf output (see below), and maintain the
 same styles in your input and output files.
 
 # Custom writers
