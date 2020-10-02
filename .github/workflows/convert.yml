@@ -38,6 +38,7 @@ jobs:
       - name: change add and push
         run: |
           git add **/*.docx && git commit -m "tmp"
-          git checkout docx && git checkout master **/*.docx
+          git checkout docx
+          git diff --name-only master origin/master | git checkout master
           git add . && git commit -m "convert"
           git push origin HEAD
