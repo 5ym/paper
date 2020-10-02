@@ -19,7 +19,7 @@ jobs:
       - name: check branch exists and init
         continue-on-error: true
         run: |
-          (git checkout docx && git fetch origin docx) || \
+          (git checkout docx && git fetch --depth=0 origin docx) || \
             (git checkout --orphan docx && \
             git rm -rf . && git commit --allow-empty -m "first commit" && \
             echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt)
