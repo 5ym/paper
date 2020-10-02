@@ -28,8 +28,6 @@ jobs:
         run: |
           yarn global add markdownlint-cli2
           cat modified.txt && cat modified.txt | xargs `yarn global bin`/markdownlint-cli2
-          echo $GITHUB_SHA > convertdone.txt
-          git add convertdone.txt
       - name: convert file
         uses: docker://pandoc/core
         with:
@@ -37,8 +35,9 @@ jobs:
           args: -c "cat modified.txt | xargs -i pandoc -o {}.docx {}.md"
       - name: change add and push
         run: |
-          git add **/*.docx && git commit -m "tmp"
+          git add . && git commit -m "tmp"
           git checkout docx
-          git diff --name-only master origin/master | xargs git checkout master
+          git show master:modified.txt | xargs git checkout master
+          echo $GITHUB_SHA > convertdone.txt
           git add . && git commit -m "convert"
           git push origin HEAD
