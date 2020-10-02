@@ -24,7 +24,7 @@ jobs:
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MAR $v master | grep .md$ | sed s/.md$// >> modified.txt; }
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $f.docx; }; }
           git checkout master
-      - name: lint file and save hash
+      - name: lint file
         run: |
           yarn global add markdownlint-cli2
           cat modified.txt && cat modified.txt | xargs `yarn global bin`/markdownlint-cli2
@@ -33,11 +33,11 @@ jobs:
         with:
           entrypoint: sh
           args: -c "cat modified.txt | xargs -i pandoc -o {}.docx {}.md"
-      - name: change add and push
+      - name: save hash and change add and push
         run: |
           git add . && git commit -m "tmp"
           git checkout docx
-          git show master:modified.txt | xargs git checkout master
+          git show master:modified.txt | xargs -i git checkout master {}.docx
           echo $GITHUB_SHA > convertdone.txt
           git add . && git commit -m "convert"
           git push origin HEAD
