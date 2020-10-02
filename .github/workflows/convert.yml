@@ -21,8 +21,8 @@ jobs:
         run: |
           (git checkout docx && git fetch --depth=0 origin docx) || \
             (git checkout --orphan docx && \
-            git rm -rf . && git commit --allow-empty -m "first commit" && \
-            echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt)
+            git rm -rf . && echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt && \
+            git add . && git commit -m "first commit")
       - name: check diff
         run: git diff --name-only --diff-filter=MAR `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt
       - name: erase docx
