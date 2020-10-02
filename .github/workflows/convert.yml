@@ -41,5 +41,5 @@ jobs:
           git add **/*.docx
           git commit -m "Convert docx"
           git checkout docx
-          git merge tmp
+          git merge --allow-unrelated-histories tmp
           git push origin HEAD
