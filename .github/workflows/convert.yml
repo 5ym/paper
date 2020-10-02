@@ -39,6 +39,6 @@ jobs:
         run: |
           git add **/*.docx && git commit -m "tmp"
           git checkout docx
-          git diff --name-only master origin/master | git checkout master
+          git diff --name-only master origin/master | xargs git checkout master
           git add . && git commit -m "convert"
           git push origin HEAD
