@@ -30,23 +30,24 @@ jobs:
         continue-on-error: true
         id: modify
         run: |
-          git diff --name-only --diff-filter=MAR `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt || \
-          echo "::set-output name=status::failure"
+          set -o pipefail
+          git diff --name-only --diff-filter=MAR `git show docx:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt && \
+          echo "::set-output name=status::success"
       - name: lint
-        if: steps.modify.outputs.status != 'failure'
+        if: steps.modify.outputs.status == 'success'
         run: |
           git checkout master
           git checkout -b tmp
           yarn global add markdownlint-cli2
           cat modified.txt | xargs `yarn global bin`/markdownlint-cli2
       - name: convert file
-        if: steps.modify.outputs.status != 'failure'
+        if: steps.modify.outputs.status == 'success'
         uses: docker://pandoc/core
         with:
           entrypoint: sh
           args: -c "cat modified.txt | xargs -i pandoc -o {}.docx {}.md"
       - name: save hash and change add
-        if: steps.modify.outputs.status != 'failure'
+        if: steps.modify.outputs.status == 'success'
         run: |
           git add . && git commit -m "tmp"
           git checkout docx
