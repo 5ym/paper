@@ -7,29 +7,38 @@ on:
 
 jobs:
   convert:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: gitconfig
+        run: |
+          git config --local user.email "info@daco.dev"
+          git config --local user.name "5ym"
       - name: output diff file
         continue-on-error: true
         run: |
           git fetch --no-tags --prune --depth=1
           git checkout docx || (git checkout -b docx && find -name "*.md" | sed s/.md$// >> modified.txt ; exit 1)
-          git merge master
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=MAR $v master | grep .md$ | sed s/.md$// >> modified.txt; }
           cat convertdone.txt | { read v; git diff --name-only --diff-filter=D $v master | grep .md$ | sed s/.md$// | { read f; rm -f $f.docx; }; }
-      - uses: docker://pandoc/core
+      - name: lint file
+        run: |
+          yarn global add markdownlint-cli2
+          git checkout master
+          git checkout -b tmp
+          cat modified.txt && cat modified.txt | xargs markdownlint-cli2
+      - name: convert file
+        uses: docker://pandoc/core
         with:
           entrypoint: sh
-          args: -c "cat modified.txt && cat modified.txt | xargs -i pandoc -o {}.docx {}.md"
-      - name: save hash and remove diff
+          args: -c "cat modified.txt | xargs -i pandoc -o {}.docx {}.md"
+      - name: save hash and commit tmp
         run: |
           echo $GITHUB_SHA > convertdone.txt
-          rm -f modified.txt
-      - name: git checkout
-        run: |
-          git config --local user.email "info@daco.dev"
-          git config --local user.name "5ym"
-          git add .
+          git add **/*.docx
           git commit -m "Convert docx"
+      - name: merge and update
+        run: |
+          git checkout docx
+          git merge tmp
           git push origin HEAD
