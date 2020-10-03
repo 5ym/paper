@@ -14,7 +14,7 @@
 - リネームおよび移動した場合は旧ファイル名のpdfは残ります。
 - markdownlint-cli2を使用しています。pandocでは変換できてしまうような細かい文法ミスもエラーでビルドを停止します。
 - 一様eisvogelのbasic-sampleでの記法はエラーがでないようにしてあります。適宜追加していきます。
-- ビルド用のイメージとしてpandoc/latex公式イメージ+collection-langjapanese+eisvogel+markdownlint-cli2のイメージがここ`ghcr.io/5ym/pandoc`にあります
+- ビルド用のイメージとして作成したpandoc/latex公式イメージ+noto-sans-cjk-jp+eisvogel+markdownlint-cli2のイメージがここ`ghcr.io/5ym/pandoc`にあります
 - eisvogelで使えるテンプレートは[ここ](https://github.com/Wandmalfarbe/pandoc-latex-template/tree/master/examples)
 - `./confirm.sh ファイル名`で手元で編集中のmdをpdfに変換できます。
 - その他機能追加,質問はissueでお願いします。
