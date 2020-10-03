@@ -18,3 +18,7 @@
 - eisvogelで使えるテンプレートは[ここ](https://github.com/Wandmalfarbe/pandoc-latex-template/tree/master/examples)
 - `./confirm.sh ファイル名`で手元で編集中のmdをpdfに変換できます。
 - その他機能追加,質問はissueでお願いします。
+
+## 使い方
+
+`Use this template`をクリックして新規リポジトリを作成してそこにファイルを追加していきます。
