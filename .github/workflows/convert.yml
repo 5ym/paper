@@ -29,12 +29,11 @@ jobs:
           git add . && git commit -m "remove"
           git diff --name-only --diff-filter=MAR `git show pdf:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt && \
           echo "::set-output name=status::success"
-      - name: lint and convert and push
+      - name: lint and convert
         if: steps.check.outputs.status == 'success'
         run: |
           git checkout master
           git checkout -b tmp
-          echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
           docker run -v $PWD:/data --entrypoint sh ghcr.io/5ym/pandoc -c "cat modified.txt | xargs markdownlint-cli2 && \
             cat modified.txt | xargs -i pandoc --template eisvogel --listings --pdf-engine xelatex -V CJKmainfont='Noto Serif CJK JP' -o {}.pdf {}.md"
           git add . && git commit -m "tmp"
