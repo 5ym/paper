@@ -12,8 +12,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: git config and fetch branch
         run: |
-          git config --local user.email "info@daco.dev"
-          git config --local user.name "5ym"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Action"
           git config --global core.quotepath false
           git fetch --no-tags --prune --depth=1
       - name: check branch exists and init and remove file and check modify
