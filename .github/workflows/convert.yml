@@ -34,7 +34,7 @@ jobs:
         run: |
           git checkout master
           git checkout -b tmp
-          docker run -v $PWD:/data --entrypoint sh ghcr.io/5ym/pandoc -c "cat modified.txt | xargs markdownlint-cli2 && \
+          docker run -v $PWD:/data --entrypoint sh ghcr.io/5ym/pandoc -c "cat modified.txt | xargs -i markdownlint-cli2 {}.md && \
             cat modified.txt | xargs -i pandoc --template eisvogel --listings --pdf-engine xelatex -V CJKmainfont='Noto Serif CJK JP' -o {}.pdf {}.md"
           git add . && git commit -m "tmp"
           git checkout pdf
