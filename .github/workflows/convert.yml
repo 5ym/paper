@@ -9,7 +9,7 @@ jobs:
   convert:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
       - name: git config and fetch branch
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
