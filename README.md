@@ -18,7 +18,9 @@
 - mdファイルもqdファイルと同じように変換できます。(md→qd→pdfの順で処理し、mdの先頭のYAMLフロントマターは読み飛ばします)
   - 数式はQuarkdownの記法(`$ x $`のように前後に空白)のみ対応です。`\begin{equation}`やスペースなしの`$x$`はそのまま文字として出ます。
 - `--strict`を付けているので、未定義の関数呼び出しなど変換時のエラーがあればビルドを停止します。
-- ビルド用のイメージとしてQuarkdown公式イメージ[`ghcr.io/iamgio/quarkdown:2`](https://github.com/iamgio/quarkdown/pkgs/container/quarkdown)を使用しています。PDF出力に必要なPuppeteerが同梱されています。
+- ビルドは公式Action[`quarkdown-labs/setup-quarkdown`](https://github.com/quarkdown-labs/setup-quarkdown)でQuarkdown本体(JRE・PuppeteerとChromeを含む)を入れて実行します。バージョンは2系の最新リリースを自動で選びます。
+  - インストール先(`$RUNNER_TOOL_CACHE/quarkdown`)を`actions/cache`でキャッシュしているので、バージョンが変わらない限り2回目以降のセットアップはダウンロード無しで済みます。
+  - GitHub Actionsのubuntuランナーではpuppeteerが用意するChromeのsandboxがAppArmorで弾かれるため、CIでは`--pdf-no-sandbox`を付けています。ローカルで`build.sh`を使う場合は環境変数`QUARKDOWN_OPTS`が空なのでsandboxは有効のままです。
 - PDFはHTMLをヘッドレスChromeで描画したものなのでLaTeXは不要です。
 - 文書の設定はファイル先頭の関数呼び出しで書きます。詳しくは[sample.qd](sample.qd)と[wiki](https://quarkdown.com/wiki/)を参照。
   - 種別: `.doctype {paged}` ([document types](https://quarkdown.com/wiki/document-types/))
@@ -60,7 +62,3 @@
 ## 使い方
 
 `Use this template`をクリックして新規リポジトリを作成してそこに`.qd`または`.md`ファイルを追加していきます。
-
-## 機能追加予定
-
-- ビルド速度向上のためにプルしてきたdockerイメージをキャッシュしたい

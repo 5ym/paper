@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  QUARKDOWN_IMAGE: ghcr.io/iamgio/quarkdown:2
+  QUARKDOWN_MAJOR: 2
 
 jobs:
   convert:
@@ -32,13 +32,48 @@ jobs:
           git add . && git commit -m "remove"
           git diff --name-only --diff-filter=MAR `git show pdf:convertdone.txt` master | grep -E '\.(qd|md)$' | grep -v '\(^\|/\)_' >> modified.txt && \
           echo "status=success" >> $GITHUB_OUTPUT
+      - name: resolve quarkdown version
+        id: quarkdown
+        if: steps.check.outputs.status == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api "repos/iamgio/quarkdown/releases?per_page=100" \
+            --jq "map(select(.draft == false and .prerelease == false and (.tag_name | startswith(\"v$QUARKDOWN_MAJOR.\")))) | .[0].tag_name")
+          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+            echo "quarkdown v$QUARKDOWN_MAJOR.x のリリースが見つかりません" >&2
+            exit 1
+          fi
+          echo "version=${tag#v}" >> $GITHUB_OUTPUT
+      - name: cache quarkdown
+        id: quarkdown-cache
+        if: steps.check.outputs.status == 'success'
+        uses: actions/cache@v4
+        with:
+          # 本体(JRE同梱)・puppeteer・Chromeが全てこの下に入る
+          path: ${{ runner.tool_cache }}/quarkdown
+          key: quarkdown-${{ runner.os }}-${{ steps.quarkdown.outputs.version }}
+      - name: install quarkdown
+        if: steps.check.outputs.status == 'success' && steps.quarkdown-cache.outputs.cache-hit != 'true'
+        uses: quarkdown-labs/setup-quarkdown@v1
+        with:
+          quarkdown-version: ${{ steps.quarkdown.outputs.version }}
+      - name: use cached quarkdown
+        if: steps.check.outputs.status == 'success' && steps.quarkdown-cache.outputs.cache-hit == 'true'
+        run: |
+          # setup-quarkdownが作る/usr/local/binのラッパーはキャッシュ対象外なので同じ環境変数を張り直す
+          echo "$RUNNER_TOOL_CACHE/quarkdown/bin" >> $GITHUB_PATH
+          echo "QD_NPM_PREFIX=$RUNNER_TOOL_CACHE/quarkdown/lib" >> $GITHUB_ENV
+          echo "PUPPETEER_CACHE_DIR=$RUNNER_TOOL_CACHE/quarkdown/lib/puppeteer_cache" >> $GITHUB_ENV
       - name: convert
         if: steps.check.outputs.status == 'success'
+        env:
+          # ubuntuランナーではAppArmorによりChromeのsandboxが使えない
+          QUARKDOWN_OPTS: --pdf-no-sandbox
         run: |
           git checkout master
           git checkout -b tmp
-          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/data" -w /data --entrypoint sh $QUARKDOWN_IMAGE \
-            -c 'set -e; while read -r f; do sh ./build.sh "$f"; done < modified.txt'
+          while read -r f; do sh ./build.sh "$f"; done < modified.txt
           git add . && git commit -m "tmp"
           git checkout pdf
           git show tmp:modified.txt | sed 's/\.[^.]*$//' | xargs -i git checkout tmp {}.pdf
