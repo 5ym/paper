@@ -1,63 +1,192 @@
 .include {_setup.qd}
+.include {paper}
 
-.docname {Example PDF}
-.docauthor {Author}
-.docdescription {Quarkdown}
+.docname {Quarkdown 記法サンプル}
+.docdescription {Quarkdownの主な記法をひととおり試すためのサンプル文書}
+.docauthors
+    - 山田 太郎
+
 .dockeywords
     - Quarkdown
-    - Example
+    - サンプル
 
-# Vinaque sanguine metuenti cuiquam Alcyone fixus
+.numbering
+    - headings: 1.1.1
+    - figures: 1.1
+    - tables: 1.1
+    - equations: (1)
+    - definitions: 1
+    - theorems: 1
 
-## Aesculeae domus vincemur et Veneris adsuetus lapsum
+.abstract
+    この文書はQuarkdownでよく使う記法を一通り並べたサンプルです。
+    ビルドして仕上がりを確認したり、必要な部分をコピーして使ってください。
+    詳しい仕様は[wiki](https://quarkdown.com/wiki/)を参照してください。
 
-Lorem markdownum Letoia, et alios: figurae flectentem annis aliquid Peneosque ab
-esse, obstat gravitate. Obscura atque coniuge, per de coniunx, sibi **medias
-commentaque virgine** anima tamen comitemque petis, sed. In Amphion vestros
-hamos ire arceor mandere spicula, in licet aliquando.
+.tableofcontents
 
-```java
-public class Example implements LoremIpsum {
-	public static void main(String[] args) {
-		if(args.length < 2) {
-			System.out.println("Lorem ipsum dolor sit amet");
-		}
-	} // Obscura atque coniuge, per de coniunx
-}
+# 文章を書く
+
+段落は空行で区切ります。**太字**、*斜体*、***太字斜体***、~~打ち消し線~~、`インラインコード`、
+[リンク](https://quarkdown.com/wiki/)はMarkdownのまま書けます。
+
+脚注は参照した場所にそのまま書けます[^: 匿名の脚注です。ラベルを付ければ複数回参照できます]。
+
+行の途中で改行したいときは行末に`.br`を置きます。 .br
+このように次の行へ続きます。
+
+> Note: 引用の先頭が`Note:`や`Tip:`だと、その種類の囲みとして表示されます。
+
+## リスト
+
+- 箇条書き
+- ネストもできます
+  - 入れ子の項目
+  - もう一つ
+- 最後の項目
+
+1. 番号付きリスト
+2. 2番目
+3. 3番目
+
+## 表
+
+| 記法          | 意味             |
+| ------------- | ---------------- |
+| `**強調**`    | 太字             |
+| `*強調*`      | 斜体             |
+| `~~取り消し~~` | 打ち消し線       |
+| `$ x $`       | インラインの数式 |
+"よく使うインライン記法" {#syntax-table}
+
+キャプションは表のすぐ下の行に書きます。本文からは .ref {syntax-table} のように参照できます。
+
+# 数式
+
+インラインの数式は $ E = mc^2 $ のように、`$`の前後に空白を空けて書きます。
+
+前後を空行で区切るとブロックの数式になります。
+
+$ \overline{v} = \frac{\Delta x}{\Delta t} $ {#velocity}
+
+複数行にわたる数式は`$$$`で囲みます。
+
+$$$
+f(x) =
+\begin{cases}
+    0 & (x = 0) \\
+    1 & (x \neq 0)
+\end{cases}
+$$$
+
+式にも番号が振られるので、 .ref {velocity} のように参照できます。
+
+# コードと図
+
+コードブロックは言語名の後ろにキャプションを書けます。
+
+```python "フィボナッチ数列"
+def fib(n):
+    if n <= 1:
+        return n
+    return fib(n - 1) + fib(n - 2)
 ```
 
-Porrigitur et Pallas nuper longusque cratere habuisse sepulcro pectore fertur.
-Laudat ille auditi; vertitur iura tum nepotis causa; motus. Diva virtus! Acrota
-destruitis vos iubet quo et classis excessere Scyrumve spiro subitusque mente
-Pirithoi abstulit, lapides.
+`.mermaid`でMermaidの図をそのまま埋め込めます。
 
-## Lydia caelo recenti haerebat lacerum ratae at
+.mermaid
+    flowchart TD
+        A([qdを書く]) --> B[masterにpush]
+        B --> C{変更あり?}
+        C -- あり --> D[pdfブランチを更新]
+        C -- なし --> E([終了])
+        D --> E
 
-Te concepit pollice fugit vias alumno **oras** quam potest
-[rursus](http://example.com#rursus) optat. Non evadere orbem equorum, spatiis,
-vel pede inter si.
+`.xychart`はグラフを描きます。キャプションを付けると図として番号が振られます。
 
-1. De neque iura aquis
-2. Frangitur gaudia mihi eo umor terrae quos
-3. Recens diffudit ille tantum
+.xychart bars:{yes} x:{月} y:{ページ数} caption:{執筆ページ数の推移}
+    - 4
+    - 9
+    - 12
+    - 20
+    - 31
 
-$ p_{ij}(t) = \frac {\ell_j(t) - \ell_i(t)} {\sum_{k \in N_i(t)}^{} \ell_k(t) - \ell_i(t)} $
+# レイアウト
 
-Tamen condeturque saxa Pallorque num et ferarum promittis inveni lilia iuvencae
-adessent arbor. Florente perque at condeturque saxa et ferarum promittis tendebat. Armos nisi obortas refugit me.
+`.row`は横並び、`.column`は縦並び、`.grid`は格子状に要素を並べます。項目は空行で区切ります。
 
-> Et nepotes poterat, se qui. Euntem ego pater desuetaque aethera Maeandri, et
-> [Dardanio geminaque](http://example.com#Dardanio_geminaque) cernit. Lassaque poenas
-> nec, manifesta $ \pi r^2 $ mirantia captivarum prohibebant scelerato gradus unusque
-> dura.
+.row gap:{1cm} alignment:{spacearound}
+    左
 
-- Permulcens flebile simul
-- Iura tum nepotis causa motus diva virtus Acrota. Tamen condeturque saxa Pallorque num et ferarum promittis inveni lilia iuvencae adessent arbor. Florente perque at ire arcum.
+    中央
 
-## 日本語のサンプル
+    右
 
-`.font` で指定したフォントがそのまま使われるため、日本語の本文もそのまま組版できます。
-禁則処理や約物のアキはブラウザ (Chrome) のレンダリング結果がそのままPDFになります。
+.grid columns:{2} gap:{4mm}
+    A
+
+    *B*
+
+    **C**
+
+    ***D***
 
 .center
-    **中央揃えもこのとおり関数で書けます。**
+    `.center`で中央揃えになります。
+
+`.box`は種類を選べる囲みです。
+
+.box {補足} type:{tip}
+    種類は`callout`(既定)、`tip`、`note`、`warning`、`error`から選べます。
+
+.box type:{note}
+    タイトルを省くと`.doclang`の言語に合わせた見出しが自動で入ります。
+
+# 定理と証明
+
+`.include {paper}`で読み込むpaperライブラリを使うと、LaTeXのような定理環境が使えます。
+見出しは`.doclang`に合わせて日本語になります。
+
+.definition
+    物体の位置の変化 $ \Delta x $ と経過時間 $ \Delta t $ に対して、
+    平均速度を $ v = \frac{\Delta x}{\Delta t} $ と定義する。
+
+.theorem
+    $ \Delta t > 0 $ ならば、平均速度 $ v $ は一意に定まる。
+
+.proof
+    $ \Delta x $ と $ \Delta t $ はいずれも実数であり、 $ \Delta t \neq 0 $ であるから、
+    商は一意に定まる。
+
+# 変数と関数
+
+`.var`で変数、`.function`で関数を定義できます。呼び出しは`.名前`です。
+
+.var {theme} {paperwhite}
+
+このテンプレートの既定テーマは **.theme** です。
+
+.function {greet}
+    name:
+    こんにちは、**.name**さん!
+
+.greet {Quarkdown}
+
+`.foreach`は繰り返し、`.if`は条件分岐です。計算もその場で書けます。
+
+.row alignment:{spacearound}
+    .foreach {1..5}
+        n:
+        .multiply {.n} by:{.n}
+
+.if {.iseven {4}}
+    4は偶数なのでこの行が出ます。
+
+<<<
+
+# 付録
+
+`<<<`だけの行を置くと改ページします。この見出しは新しいページから始まっています。
+
+日本語の禁則処理や約物のアキは、ヘッドレスChromeのレンダリング結果がそのままPDFになります。
+フォントは`_setup.qd`の`.font`で指定しています。

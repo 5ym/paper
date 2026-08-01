@@ -22,7 +22,7 @@
   - インストール先(`$RUNNER_TOOL_CACHE/quarkdown`)を`actions/cache`でキャッシュしているので、バージョンが変わらない限り2回目以降のセットアップはダウンロード無しで済みます。
   - GitHub Actionsのubuntuランナーではpuppeteerが用意するChromeのsandboxがAppArmorで弾かれるため、CIでは`--pdf-no-sandbox`を付けています。手元で変換する場合は不要です。
 - PDFはHTMLをヘッドレスChromeで描画したものなのでLaTeXは不要です。
-- 文書の設定はファイル先頭の関数呼び出しで書きます。詳しくは[sample.qd](sample.qd)と[wiki](https://quarkdown.com/wiki/)を参照。
+- 文書の設定はファイル先頭の関数呼び出しで書きます。主な記法は[sample.qd](sample.qd)に一通り並べてあるので、そちらと[wiki](https://quarkdown.com/wiki/)を参照。
   - 種別: `.doctype {paged}` ([document types](https://quarkdown.com/wiki/document-types/))
   - 用紙: `.pageformat size:{A4} margin:{2cm}` ([page format](https://quarkdown.com/wiki/page-format/))
   - テーマ: `.theme {paperwhite} layout:{latex}` ([themes](https://quarkdown.com/wiki/themes/))
