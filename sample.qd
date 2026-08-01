@@ -1,11 +1,11 @@
----
-title: "Example PDF"
-author: [Author]
-date: "2017-02-20"
-subject: "Markdown"
-keywords: [Markdown, Example]
-lang: "en"
-...
+.include {_setup.qd}
+
+.docname {Example PDF}
+.docauthor {Author}
+.docdescription {Quarkdown}
+.dockeywords
+    - Quarkdown
+    - Example
 
 # Vinaque sanguine metuenti cuiquam Alcyone fixus
 
@@ -41,17 +41,23 @@ vel pede inter si.
 2. Frangitur gaudia mihi eo umor terrae quos
 3. Recens diffudit ille tantum
 
-\begin{equation}\label{eq:neighbor-propability}
-    p_{ij}(t) = \frac{\ell_j(t) - \ell_i(t)}{\sum_{k \in N_i(t)}^{} \ell_k(t) - \ell_i(t)}
-\end{equation}
+$ p_{ij}(t) = \frac {\ell_j(t) - \ell_i(t)} {\sum_{k \in N_i(t)}^{} \ell_k(t) - \ell_i(t)} $
 
 Tamen condeturque saxa Pallorque num et ferarum promittis inveni lilia iuvencae
 adessent arbor. Florente perque at condeturque saxa et ferarum promittis tendebat. Armos nisi obortas refugit me.
 
 > Et nepotes poterat, se qui. Euntem ego pater desuetaque aethera Maeandri, et
-[Dardanio geminaque](http://example.com#Dardanio_geminaque) cernit. Lassaque poenas
-nec, manifesta $\pi r^2$ mirantia captivarum prohibebant scelerato gradus unusque
-dura.
+> [Dardanio geminaque](http://example.com#Dardanio_geminaque) cernit. Lassaque poenas
+> nec, manifesta $ \pi r^2 $ mirantia captivarum prohibebant scelerato gradus unusque
+> dura.
 
 - Permulcens flebile simul
 - Iura tum nepotis causa motus diva virtus Acrota. Tamen condeturque saxa Pallorque num et ferarum promittis inveni lilia iuvencae adessent arbor. Florente perque at ire arcum.
+
+## 日本語のサンプル
+
+`.font` で指定したフォントがそのまま使われるため、日本語の本文もそのまま組版できます。
+禁則処理や約物のアキはブラウザ (Chrome) のレンダリング結果がそのままPDFになります。
+
+.center
+    **中央揃えもこのとおり関数で書けます。**

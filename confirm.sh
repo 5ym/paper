@@ -1,2 +1,5 @@
 #!/bin/sh
-echo $1 | xargs -i docker run -v $PWD:/data --entrypoint sh ghcr.io/5ym/pandoc -c "markdownlint-cli2 {} && pandoc --template eisvogel --listings --pdf-engine xelatex -V CJKmainfont='Noto Serif CJK JP' -o confirm.pdf {}"
+# 手元のqdファイルをconfirm.pdfに変換する
+# 使い方: ./confirm.sh path/to/file.qd
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/data" -w /data \
+  ghcr.io/iamgio/quarkdown:2 c "$1" --pdf --strict --allow global-read --out . --out-name confirm

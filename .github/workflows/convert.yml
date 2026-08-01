@@ -1,9 +1,12 @@
-name: md to pdf
+name: qd to pdf
 
 on:
   push:
-    branches: 
+    branches:
       - master
+
+env:
+  QUARKDOWN_IMAGE: ghcr.io/iamgio/quarkdown:2
 
 jobs:
   convert:
@@ -25,17 +28,17 @@ jobs:
             git rm -rf . && echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt && \
             git add . && git commit -m "first commit")
           set -o pipefail
-          git diff --name-only --diff-filter=D `git show pdf:convertdone.txt` master | grep .md$ | sed s/.md$// | { read f; rm -f $f.pdf; } && \
+          git diff --name-only --diff-filter=D `git show pdf:convertdone.txt` master | grep '\.qd$' | grep -v '\(^\|/\)_' | sed s/.qd$// | { while read -r f; do rm -f "$f.pdf"; done; } && \
           git add . && git commit -m "remove"
-          git diff --name-only --diff-filter=MAR `git show pdf:convertdone.txt` master | grep .md$ | sed s/.md$// >> modified.txt && \
-          echo "::set-output name=status::success"
-      - name: lint and convert
+          git diff --name-only --diff-filter=MAR `git show pdf:convertdone.txt` master | grep '\.qd$' | grep -v '\(^\|/\)_' | sed s/.qd$// >> modified.txt && \
+          echo "status=success" >> $GITHUB_OUTPUT
+      - name: convert
         if: steps.check.outputs.status == 'success'
         run: |
           git checkout master
           git checkout -b tmp
-          docker run -v $PWD:/data --entrypoint sh ghcr.io/5ym/pandoc -c "cat modified.txt | xargs -i markdownlint-cli2 {}.md && \
-            cat modified.txt | xargs -i pandoc --template eisvogel --listings --pdf-engine xelatex -V mainfont='BIZ UDPMincho' -V CJKmainfont='BIZ UDPMincho' -o {}.pdf {}.md"
+          docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/data" -w /data --entrypoint sh $QUARKDOWN_IMAGE \
+            -c 'set -e; while read -r f; do quarkdown c "$f.qd" --pdf --strict --allow global-read --out "$(dirname "$f")" --out-name "$(basename "$f")"; done < modified.txt'
           git add . && git commit -m "tmp"
           git checkout pdf
           git show tmp:modified.txt | xargs -i git checkout tmp {}.pdf
