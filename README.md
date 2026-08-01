@@ -1,24 +1,22 @@
 # paper
 
-[Quarkdown](https://github.com/iamgio/quarkdown)でqd/mdファイルをpdfに変換します。
+[Quarkdown](https://github.com/iamgio/quarkdown)でqdファイルをpdfに変換します。
 
 ## 仕様
 
-- 初回実行時はpdfブランチが自動で作成されます。(qd/mdファイルが一つもなかった場合エラーで終了しブランチは作成されません。)
+- 初回実行時はpdfブランチが自動で作成されます。(qdファイルが一つもなかった場合エラーで終了しブランチは作成されません。)
 - theme等を変更し全てビルドしなおしたい時はpdfブランチ削除してmasterを変更すれば全てビルドしなおします。
-- 初回実行時qd/mdファイルは再帰的に検索され全て変換されます。
+- 初回実行時qdファイルは再帰的に検索され全て変換されます。
 - 元々のファイルと同一のフォルダ構造で配置します。
 - pdfブランチにはpdfファイルのみを生成します。
-- masterからqd/mdファイルを削除するとpdfからも自動で削除されます。
+- masterからqdファイルを削除するとpdfからも自動で削除されます。
 - 変更があったファイルのみをビルドするようにしています。
 - リネームおよび移動した場合は旧ファイル名のpdfは残ります。
-- `README.md`はリポジトリの説明とみなして変換対象から除外しています。
 - `_`で始まるファイル(`_setup.qd`など)は単体では変換されません。`.include`で読み込む共通設定や分割用のファイルはこの名前にしてください。
 - テーマ・用紙・フォントなどの共通設定は[_setup.qd](_setup.qd)にまとめてあります。文書の先頭で`.include {_setup.qd}`と書いて読み込んでください。([including other files](https://quarkdown.com/wiki/including-other-quarkdown-files/))
   - `_setup.qd`からの相対パスではなく、その文書から見た相対パスです。サブフォルダに置いた文書なら`.include {../_setup.qd}`になります。
   - `.include`の後に同じ関数を呼べばその文書だけ設定を上書きできます。
-- mdファイルもqdファイルと同じように変換できます。(md→qd→pdfの順で処理し、mdの先頭のYAMLフロントマターは読み飛ばします。`.include {_setup.qd}`はmd側にも書きます)
-  - 数式はQuarkdownの記法(`$ x $`のように前後に空白)のみ対応です。`\begin{equation}`やスペースなしの`$x$`はそのまま文字として出ます。
+- 変換対象は`.qd`のみです。mdから移行する場合は[md-to-qd.sh](md-to-qd.sh)を参照してください。
 - `--strict`を付けているので、未定義の関数呼び出しなど変換時のエラーがあればビルドを停止します。
 - ビルドは公式Action[`quarkdown-labs/setup-quarkdown`](https://github.com/quarkdown-labs/setup-quarkdown)でQuarkdown本体(JRE・PuppeteerとChromeを含む)を入れて実行します。バージョンは2系の最新リリースを自動で選びます。
   - インストール先(`$RUNNER_TOOL_CACHE/quarkdown`)を`actions/cache`でキャッシュしているので、バージョンが変わらない限り2回目以降のセットアップはダウンロード無しで済みます。
@@ -50,7 +48,6 @@ quarkdown c sample.qd -w -p --allow global-read
 
 - `--allow global-read`はリポジトリ外・親ディレクトリのファイル(サブフォルダ文書からの`../_setup.qd`など)を読むために付けています。
 - ブラウザを開かずポートだけ使いたい場合は`-b none`、ポート変更は`--server-port`です。
-- mdはそのままでは渡せないので、`sh to-qd.sh doc.md doc.preview.qd`でqdにしてからプレビューしてください。(mdを編集しても自動では追従しないので、変更のたびに実行し直します)
 - PDFを手元で出したい場合は`./build.sh <ファイル>`です。CIと同じオプションで変換します。
 
 VS Codeの公式拡張[Quarkdown](https://marketplace.visualstudio.com/items?itemName=quarkdown.quarkdown-vscode)(`Ctrl+Shift+V`でプレビュー、`Ctrl+Alt+P`でPDF出力)も使えます。設定に以下を入れると`.include`や画像の読み込みで権限エラーになりません。
@@ -65,4 +62,19 @@ VS Codeの公式拡張[Quarkdown](https://marketplace.visualstudio.com/items?ite
 
 ## 使い方
 
-`Use this template`をクリックして新規リポジトリを作成してそこに`.qd`または`.md`ファイルを追加していきます。
+`Use this template`をクリックして新規リポジトリを作成してそこに`.qd`ファイルを追加していきます。
+
+## mdからの移行
+
+既にmdで書いている場合は[md-to-qd.sh](md-to-qd.sh)を一度実行すると全てqdに移行できます。(引数にファイルを渡すとそれだけ変換します)
+
+```sh
+./md-to-qd.sh
+```
+
+- 先頭のYAMLフロントマターを取り除きます。(そのままだと`---`が区切り線、`title:`行が見出しとして本文に出てしまいます)
+- その文書から見た相対パスで`.include {_setup.qd}`を先頭に足します。既に書いてある場合は足しません。
+- `_`で始まるファイルは分割用とみなして`.include`を足しません。
+- 元のmdは削除するので、結果を確認してからコミットしてください。`README.md`は対象外です。
+
+Quarkdown自体はMarkdownの上位互換なので、本文の書き方はほとんどそのままで通ります。ただし数式はQuarkdownの記法(`$ x $`のように前後に空白)のみ対応で、`\begin{equation}`やスペース無しの`$x$`はそのまま文字として出ます。

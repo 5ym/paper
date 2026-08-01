@@ -28,9 +28,9 @@ jobs:
             git rm -rf . && echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt && \
             git add . && git commit -m "first commit")
           set -o pipefail
-          git diff --name-only --diff-filter=D `git show pdf:convertdone.txt` master | grep -E '\.(qd|md)$' | grep -v '\(^\|/\)_' | grep -v '\(^\|/\)README\.md$' | sed 's/\.[^.]*$//' | { while read -r f; do rm -f "$f.pdf"; done; } && \
+          git diff --name-only --diff-filter=D `git show pdf:convertdone.txt` master | grep -E '\.qd$' | grep -v '\(^\|/\)_' | sed 's/\.[^.]*$//' | { while read -r f; do rm -f "$f.pdf"; done; } && \
           git add . && git commit -m "remove"
-          git diff --name-only --diff-filter=MAR `git show pdf:convertdone.txt` master | grep -E '\.(qd|md)$' | grep -v '\(^\|/\)_' | grep -v '\(^\|/\)README\.md$' >> modified.txt && \
+          git diff --name-only --diff-filter=MAR `git show pdf:convertdone.txt` master | grep -E '\.qd$' | grep -v '\(^\|/\)_' >> modified.txt && \
           echo "status=success" >> $GITHUB_OUTPUT
       - name: resolve quarkdown version
         id: quarkdown
