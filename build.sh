@@ -16,6 +16,7 @@ tmp=$(dirname "$src")/.qdbuild.qd
 trap 'rm -f "$tmp"' EXIT
 sh "$(dirname "$0")/to-qd.sh" "$src" "$tmp"
 
-# QUARKDOWN_OPTSは追加オプション(CIの--pdf-no-sandboxなど)。単語分割させるので引用しない
+# 追加オプション(CIの--pdf-no-sandboxなど)。単語分割させるので引用しない
+# QUARKDOWN_OPTSはbin/quarkdownがJVMオプションとして解釈するので別名にしている
 # shellcheck disable=SC2086
-quarkdown c "$tmp" --pdf --strict --allow global-read $QUARKDOWN_OPTS --out "$out" --out-name "$name"
+quarkdown c "$tmp" --pdf --strict --allow global-read $QUARKDOWN_EXTRA_OPTS --out "$out" --out-name "$name"

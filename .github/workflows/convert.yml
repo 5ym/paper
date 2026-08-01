@@ -69,7 +69,7 @@ jobs:
         if: steps.check.outputs.status == 'success'
         env:
           # ubuntuランナーではAppArmorによりChromeのsandboxが使えない
-          QUARKDOWN_OPTS: --pdf-no-sandbox
+          QUARKDOWN_EXTRA_OPTS: --pdf-no-sandbox
         run: |
           git checkout master
           git checkout -b tmp

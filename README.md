@@ -20,7 +20,7 @@
 - `--strict`を付けているので、未定義の関数呼び出しなど変換時のエラーがあればビルドを停止します。
 - ビルドは公式Action[`quarkdown-labs/setup-quarkdown`](https://github.com/quarkdown-labs/setup-quarkdown)でQuarkdown本体(JRE・PuppeteerとChromeを含む)を入れて実行します。バージョンは2系の最新リリースを自動で選びます。
   - インストール先(`$RUNNER_TOOL_CACHE/quarkdown`)を`actions/cache`でキャッシュしているので、バージョンが変わらない限り2回目以降のセットアップはダウンロード無しで済みます。
-  - GitHub Actionsのubuntuランナーではpuppeteerが用意するChromeのsandboxがAppArmorで弾かれるため、CIでは`--pdf-no-sandbox`を付けています。ローカルで`build.sh`を使う場合は環境変数`QUARKDOWN_OPTS`が空なのでsandboxは有効のままです。
+  - GitHub Actionsのubuntuランナーではpuppeteerが用意するChromeのsandboxがAppArmorで弾かれるため、CIでは`--pdf-no-sandbox`を付けています。ローカルで`build.sh`を使う場合は環境変数`QUARKDOWN_EXTRA_OPTS`が空なのでsandboxは有効のままです。(`QUARKDOWN_OPTS`は`bin/quarkdown`がJVMオプションとして解釈するので使えません)
 - PDFはHTMLをヘッドレスChromeで描画したものなのでLaTeXは不要です。
 - 文書の設定はファイル先頭の関数呼び出しで書きます。詳しくは[sample.qd](sample.qd)と[wiki](https://quarkdown.com/wiki/)を参照。
   - 種別: `.doctype {paged}` ([document types](https://quarkdown.com/wiki/document-types/))
