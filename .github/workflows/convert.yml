@@ -48,7 +48,7 @@ jobs:
       - name: cache quarkdown
         id: quarkdown-cache
         if: steps.check.outputs.status == 'success'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           # 本体(JRE同梱)・puppeteer・Chromeが全てこの下に入る
           path: ${{ runner.tool_cache }}/quarkdown
