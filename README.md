@@ -20,7 +20,7 @@
 - `--strict`を付けているので、未定義の関数呼び出しなど変換時のエラーがあればビルドを停止します。
 - ビルドは公式Action[`quarkdown-labs/setup-quarkdown`](https://github.com/quarkdown-labs/setup-quarkdown)でQuarkdown本体(JRE・PuppeteerとChromeを含む)を入れて実行します。バージョンは2系の最新リリースを自動で選びます。
   - インストール先(`$RUNNER_TOOL_CACHE/quarkdown`)を`actions/cache`でキャッシュしているので、バージョンが変わらない限り2回目以降のセットアップはダウンロード無しで済みます。
-  - GitHub Actionsのubuntuランナーではpuppeteerが用意するChromeのsandboxがAppArmorで弾かれるため、CIでは`--pdf-no-sandbox`を付けています。ローカルで`build.sh`を使う場合は環境変数`QUARKDOWN_EXTRA_OPTS`が空なのでsandboxは有効のままです。(`QUARKDOWN_OPTS`は`bin/quarkdown`がJVMオプションとして解釈するので使えません)
+  - GitHub Actionsのubuntuランナーではpuppeteerが用意するChromeのsandboxがAppArmorで弾かれるため、CIでは`--pdf-no-sandbox`を付けています。手元で変換する場合は不要です。
 - PDFはHTMLをヘッドレスChromeで描画したものなのでLaTeXは不要です。
 - 文書の設定はファイル先頭の関数呼び出しで書きます。詳しくは[sample.qd](sample.qd)と[wiki](https://quarkdown.com/wiki/)を参照。
   - 種別: `.doctype {paged}` ([document types](https://quarkdown.com/wiki/document-types/))
@@ -48,7 +48,7 @@ quarkdown c sample.qd -w -p --allow global-read
 
 - `--allow global-read`はリポジトリ外・親ディレクトリのファイル(サブフォルダ文書からの`../_setup.qd`など)を読むために付けています。
 - ブラウザを開かずポートだけ使いたい場合は`-b none`、ポート変更は`--server-port`です。
-- PDFを手元で出したい場合は`./build.sh <ファイル>`です。CIと同じオプションで変換します。
+- PDFを手元で出したい場合は`quarkdown c sample.qd --pdf --strict --allow global-read`です。出力先は`quarkdown-output/`(`.gitignore`済み)なので、リポジトリを汚さずに確認できます。
 
 VS Codeの公式拡張[Quarkdown](https://marketplace.visualstudio.com/items?itemName=quarkdown.quarkdown-vscode)(`Ctrl+Shift+V`でプレビュー、`Ctrl+Alt+P`でPDF出力)も使えます。設定に以下を入れると`.include`や画像の読み込みで権限エラーになりません。
 

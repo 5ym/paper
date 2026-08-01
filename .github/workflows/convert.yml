@@ -67,13 +67,15 @@ jobs:
           echo "PUPPETEER_CACHE_DIR=$RUNNER_TOOL_CACHE/quarkdown/lib/puppeteer_cache" >> $GITHUB_ENV
       - name: convert
         if: steps.check.outputs.status == 'success'
-        env:
-          # ubuntuランナーではAppArmorによりChromeのsandboxが使えない
-          QUARKDOWN_EXTRA_OPTS: --pdf-no-sandbox
         run: |
           git checkout master
           git checkout -b tmp
-          while read -r f; do sh ./build.sh "$f"; done < modified.txt
+          # 元のフォルダ構造のままpdfを作る。--pdf-no-sandboxはubuntuランナーでは
+          # AppArmorによりChromeのsandboxが使えないため
+          while read -r f; do
+            quarkdown c "$f" --pdf --strict --allow global-read --pdf-no-sandbox \
+              --out "$(dirname "$f")" --out-name "$(basename "${f%.*}")"
+          done < modified.txt
           git add . && git commit -m "tmp"
           git checkout pdf
           git show tmp:modified.txt | sed 's/\.[^.]*$//' | xargs -i git checkout tmp {}.pdf
