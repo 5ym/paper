@@ -1,3 +1,5 @@
+.include {_setup.qd}
+
 .docname {Example PDF}
 .docauthor {Author}
 .docdescription {Quarkdown}
