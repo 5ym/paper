@@ -11,17 +11,9 @@ if [ -z "$name" ]; then
   name=${name%.*}
 fi
 
-# _setup.qdの共通設定を先頭に注入した一時ファイルを作って変換する
+# 共通設定を注入した一時ファイルを作って変換する
 tmp=$(dirname "$src")/.qdbuild.qd
 trap 'rm -f "$tmp"' EXIT
-
-{
-  [ -f _setup.qd ] && cat _setup.qd || true
-  case $src in
-    # mdの場合は先頭のYAMLフロントマターを読み飛ばす
-    *.md) awk 'NR == 1 && $0 == "---" { fm = 1; next } fm && ($0 == "---" || $0 == "...") { fm = 0; next } !fm' "$src" ;;
-    *) cat "$src" ;;
-  esac
-} > "$tmp"
+sh "$(dirname "$0")/to-qd.sh" "$src" "$tmp"
 
 quarkdown c "$tmp" --pdf --strict --allow global-read --out "$out" --out-name "$name"

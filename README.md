@@ -13,9 +13,9 @@
 - 変更があったファイルのみをビルドするようにしています。
 - リネームおよび移動した場合は旧ファイル名のpdfは残ります。
 - `_`で始まるファイル(`_setup.qd`など)は単体では変換されません。`.include`で読み込む共通設定や分割用のファイルはこの名前にしてください。
-- テーマ・用紙・フォントなどの共通設定は[_setup.qd](_setup.qd)にまとめてあります。ビルド時に[build.sh](build.sh)が各ファイルの先頭に自動で連結するので、文書ごとにフォント等を書く必要はありません。文書側で同じ関数を呼べばその文書だけ上書きできます。
+- テーマ・用紙・フォントなどの共通設定は[_setup.qd](_setup.qd)にまとめてあります。ビルド時に[to-qd.sh](to-qd.sh)が各ファイルの先頭に自動で連結するので、文書ごとにフォント等を書く必要はありません。文書側で同じ関数を呼べばその文書だけ上書きできます。
   - `_setup.qd`の行数分だけエラーメッセージの行番号がずれます。
-- mdファイルもそのまま変換できます。(内部的にはmd→qd→pdfで、先頭のYAMLフロントマターは読み飛ばします)
+- mdファイルもqdファイルと同じように変換できます。(md→qd→pdfの順で処理し、mdの先頭のYAMLフロントマターは読み飛ばします)
   - 数式はQuarkdownの記法(`$ x $`のように前後に空白)のみ対応です。`\begin{equation}`やスペースなしの`$x$`はそのまま文字として出ます。
 - `--strict`を付けているので、未定義の関数呼び出しなど変換時のエラーがあればビルドを停止します。
 - ビルド用のイメージとしてQuarkdown公式イメージ[`ghcr.io/iamgio/quarkdown:2`](https://github.com/iamgio/quarkdown/pkgs/container/quarkdown)を使用しています。PDF出力に必要なPuppeteerが同梱されています。
@@ -26,8 +26,36 @@
   - テーマ: `.theme {paperwhite} layout:{latex}` ([themes](https://quarkdown.com/wiki/themes/))
   - フォント: `.font {GoogleFonts:BIZ UDPMincho}` ([font configuration](https://quarkdown.com/wiki/font-configuration/))
 - 日本語フォントはイメージに同梱されていないため、Google Fontsかリポジトリ内のフォントファイルを指定します。既定では`_setup.qd`でBIZ UDPMinchoを指定しています。
-- `./confirm.sh ファイル名`で手元で編集中のファイルをpdfに変換できます。`confirm.pdf`というのが生成されます。(dockerが必要です)
 - その他機能追加,質問はissueでお願いします。
+
+## プレビュー
+
+`./confirm.sh`を実行すると、リポジトリ内のqd/mdに共通設定を注入したqdが`tmp/`以下に同じフォルダ構造で生成されます。(引数にファイルを渡すとそれだけ生成します) 画像や`_`付きの分割ファイルは`tmp/`側にシンボリックリンクされるので相対パスもそのまま使えます。生成されたqdをVS Codeで開き`Ctrl+Shift+V`でプレビューします。
+
+セットアップは以下の通りです。
+
+1. Quarkdown本体をインストールします。JRE同梱なのでJavaは不要です。(Node.jsが無ければ自動で入ります)
+
+   ```sh
+   curl -fsSL https://raw.githubusercontent.com/quarkdown-labs/get-quarkdown/refs/heads/main/install.sh | sudo env "PATH=$PATH" bash
+   ```
+
+   WSLで使う場合はWindows側ではなくWSL内にインストールし、VS CodeもWSLに接続した状態で使います。他のインストール方法(Homebrew, Scoop等)は[本家のREADME](https://github.com/iamgio/quarkdown#getting-started)を参照。
+
+2. VS Codeに公式拡張[Quarkdown](https://marketplace.visualstudio.com/items?itemName=quarkdown.quarkdown-vscode)を入れます。`.qd`のみが対象なのでmdは`./confirm.sh`でqdにしてからプレビューします。
+3. VS Codeの設定に以下を追加します。
+
+   ```json
+   {
+     "quarkdown.additionalCompilerOptions": "--allow global-read"
+   }
+   ```
+
+   `tmp/`以下の画像や分割ファイルはシンボリックリンクなので、この指定が無いと権限エラーになります。
+
+- `Quarkdown not found. Please install Quarkdown first.`と出る場合は1が済んでいないか、PATHが通っていません。設定`quarkdown.path`に実行ファイルのパス(既定は`quarkdown`、install.shなら`/usr/local/bin/quarkdown`)を指定してください。
+- `Ctrl+Alt+P`でPDFに書き出せます。出力先は設定`quarkdown.outputDirectory`(既定は`output`)です。
+- 拡張は保存時にコンパイルします。反映を速くしたい場合は`files.autoSaveDelay`を調整してください。
 
 ## 使い方
 
