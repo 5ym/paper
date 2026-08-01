@@ -27,7 +27,9 @@
   - 用紙: `.pageformat size:{A4} margin:{2cm}` ([page format](https://quarkdown.com/wiki/page-format/))
   - テーマ: `.theme {paperwhite} layout:{latex}` ([themes](https://quarkdown.com/wiki/themes/))
   - フォント: `.font {GoogleFonts:BIZ UDPMincho}` ([font configuration](https://quarkdown.com/wiki/font-configuration/))
-- 日本語フォントはQuarkdownに同梱されていないため、Google Fontsかリポジトリ内のフォントファイルを指定します。既定では`_setup.qd`でBIZ UDPMinchoを指定しています。
+- 日本語フォントはQuarkdownに同梱されていないため、Google Fontsかリポジトリ内のフォントファイルを指定します。既定では`_setup.qd`で本文にBIZ UDPMincho、コードにM PLUS 1 Codeを指定しています。
+  - コード用のフォントを別に指定しないと、`インラインコード`やコードブロック内の日本語が豆腐(□)になります。テーマ既定の等幅フォントに日本語が無いためです。
+  - Mermaidの図は本文と別のフォントで描画されるため、図の中の日本語は表示されません。ラベルは英数字で書いてください。(図のキャプションは本文扱いなので日本語で書けます)
 - その他機能追加,質問はissueでお願いします。
 
 ## プレビュー
