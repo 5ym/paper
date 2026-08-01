@@ -12,6 +12,7 @@
 - masterからqd/mdファイルを削除するとpdfからも自動で削除されます。
 - 変更があったファイルのみをビルドするようにしています。
 - リネームおよび移動した場合は旧ファイル名のpdfは残ります。
+- `README.md`はリポジトリの説明とみなして変換対象から除外しています。
 - `_`で始まるファイル(`_setup.qd`など)は単体では変換されません。`.include`で読み込む共通設定や分割用のファイルはこの名前にしてください。
 - テーマ・用紙・フォントなどの共通設定は[_setup.qd](_setup.qd)にまとめてあります。文書の先頭で`.include {_setup.qd}`と書いて読み込んでください。([including other files](https://quarkdown.com/wiki/including-other-quarkdown-files/))
   - `_setup.qd`からの相対パスではなく、その文書から見た相対パスです。サブフォルダに置いた文書なら`.include {../_setup.qd}`になります。
