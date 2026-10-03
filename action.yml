@@ -147,13 +147,15 @@ runs:
       shell: bash
       env:
         PDF: ${{ inputs.pdf-branch }}
-        SRC: ${{ steps.check.outputs.src }}
       run: |
         if [ "$(git branch --show-current)" = "$PDF" ]; then
           git push origin "HEAD:$PDF"
         fi
-        # 作業ツリーを元のブランチに戻す。後に続く step と、action 自身の後処理
-        # (uses: ./ で呼んだときは action.yml を作業ツリーから読み直す) のため
-        if [ -n "$SRC" ]; then
-          git checkout --quiet "$SRC"
-        fi
+    # 作業ツリーを元のブランチに戻す。途中で失敗しても戻す。後に続く step と、
+    # action 自身の後処理 (uses: ./ で呼んだときは action.yml を作業ツリーから読み直す) のため
+    - name: restore working tree
+      if: always() && steps.check.outputs.src != ''
+      shell: bash
+      env:
+        SRC: ${{ steps.check.outputs.src }}
+      run: git checkout --quiet --force "$SRC"
