@@ -1,5 +1,5 @@
-name: Quarkdown to PDF branch
-description: リポジトリ内の .qd を Quarkdown で PDF にし、元のフォルダ構造のまま pdf ブランチへ置く (変更があったものだけ)
+name: seisho (Quarkdown to PDF branch)
+description: 清書。リポジトリ内の .qd を Quarkdown で PDF にし、元のフォルダ構造のまま pdf ブランチへ置く (変更があったものだけ)
 author: 5ym
 branding:
   icon: file-text
@@ -41,7 +41,12 @@ runs:
         PDF: ${{ inputs.pdf-branch }}
       run: |
         # source-branch にチェックアウトしていないブランチを指定されたときは origin から作る
-        git rev-parse --verify -q "refs/heads/$SRC" > /dev/null || git branch "$SRC" "origin/$SRC"
+        if ! git rev-parse --verify -q "refs/heads/$SRC" > /dev/null; then
+          git branch "$SRC" "origin/$SRC" 2> /dev/null || {
+            echo "ブランチ $SRC が見つかりません。push か workflow_dispatch で呼ぶか、source-branch を指定してください" >&2
+            exit 1
+          }
+        fi
         if git ls-remote --exit-code --heads origin "$PDF" > /dev/null; then
           git checkout "$PDF"
           git fetch --unshallow origin "$PDF" || true

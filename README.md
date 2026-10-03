@@ -1,6 +1,6 @@
-# paper
+# seisho / 清書
 
-リポジトリの `.qd` を [Quarkdown](https://github.com/iamgio/quarkdown) で PDF にし、`pdf` ブランチへ置く GitHub Action。
+清書。リポジトリの `.qd` を [Quarkdown](https://github.com/iamgio/quarkdown) で PDF にし、`pdf` ブランチへ置く GitHub Action。
 
 ## 使い方
 
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: 5ym/paper@v1
+      - uses: 5ym/seisho@v1
 ```
 
 | 入力 | 既定 | 内容 |
@@ -46,7 +46,3 @@ jobs:
 ## 手元で確認
 
 [インストール](https://github.com/iamgio/quarkdown#getting-started)して `quarkdown c 文書.qd -w -p --allow global-read` でライブプレビュー、`--pdf` で PDF です。`--allow global-read` は `../_setup.qd` のような親ディレクトリのファイルを読むために要ります。VS Code なら公式拡張 [Quarkdown](https://marketplace.visualstudio.com/items?itemName=quarkdown.quarkdown-vscode) に `"quarkdown.additionalCompilerOptions": "--allow global-read"` を設定します。
-
-## md から移す
-
-対象のリポジトリの中で [md-to-qd.sh](md-to-qd.sh) を一度実行すると (`sh path/to/md-to-qd.sh`)、全ての `.md` (README.md 以外) を `.qd` にします。先頭の YAML フロントマターを取り、`.include {_setup.qd}` を足し、元の `.md` は消します。
