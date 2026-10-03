@@ -1,16 +1,16 @@
+# このリポジトリの sample.qd で action.yml をそのまま試す
 name: qd to pdf
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
 
 permissions:
   contents: write
 
 jobs:
-  convert:
+  pdf:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: 5ym/paper@v1
+      - uses: ./

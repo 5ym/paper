@@ -5,7 +5,8 @@
 # - 元のmdは削除する
 # 使い方: ./md-to-qd.sh [ファイル...]  (省略時はリポジトリ内の全md)
 set -e
-cd "$(dirname "$0")"
+# 置いたリポジトリの直下で動かす
+cd "$(git rev-parse --show-toplevel 2>/dev/null || dirname "$0")"
 
 sources() {
   if [ $# -gt 0 ]; then
