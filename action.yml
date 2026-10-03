@@ -1,23 +1,27 @@
-name: seisho (Quarkdown to PDF branch)
-description: 清書。リポジトリ内の .qd を Quarkdown で PDF にし、元のフォルダ構造のまま pdf ブランチへ置く (変更があったものだけ)
+name: seisho (Quarkdown to PDF)
+description: 清書。リポジトリ内の .qd を Quarkdown で PDF にし、同じブランチの pdf フォルダ (と、指定すれば OneDrive などの rclone の送り先) へ置く
 author: 5ym
 branding:
   icon: file-text
   color: gray-dark
 
 inputs:
-  source-branch:
-    description: .qd を読むブランチ。省略時は push されたブランチ
-    required: false
-    default: ""
-  pdf-branch:
-    description: PDF を置くブランチ。無ければ作る
+  output-dir:
+    description: PDF を置くフォルダ。.qd と同じフォルダ構造でこの下に置く
     required: false
     default: pdf
   default-setup:
     description: 既定の設定 (この Action の _setup.qd。A4・日本語フォントなど) を各文書の先頭に足す。文書の中で同じ関数を呼べば上書きできる
     required: false
     default: "true"
+  rclone-config:
+    description: rclone.conf の中身 (secrets から渡す)。rclone-remote と一緒に指定すると、そこへも PDF を送る
+    required: false
+    default: ""
+  rclone-remote:
+    description: PDF を送る rclone の送り先 (例 onedrive:Documents/report)。output-dir と同じフォルダ構造で置く
+    required: false
+    default: ""
   quarkdown-major:
     description: 使う Quarkdown のメジャーバージョン。その系列の最新リリースを使う
     required: false
@@ -30,59 +34,46 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: git config and fetch branch
-      id: init
-      shell: bash
-      run: |
-        # 最後に戻す先 (呼び出し前のブランチ。ブランチに乗っていなければコミット)
-        echo "orig=$(git branch --show-current || true)" >> "$GITHUB_OUTPUT"
-        echo "orig-sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "GitHub Action"
-        git config --global core.quotepath false
-        git fetch --no-tags --prune --depth=1
-    - name: init pdf branch, remove deleted, list modified
-      id: check
+    - name: list changed .qd
+      id: list
       shell: bash
       env:
-        SRC: ${{ inputs.source-branch || github.ref_name }}
-        PDF: ${{ inputs.pdf-branch }}
+        OUT: ${{ inputs.output-dir }}
       run: |
-        # source-branch にチェックアウトしていないブランチを指定されたときは origin から作る
-        if ! git rev-parse --verify -q "refs/heads/$SRC" > /dev/null; then
-          git branch "$SRC" "origin/$SRC" 2> /dev/null || {
-            echo "ブランチ $SRC が見つかりません。push か workflow_dispatch で呼ぶか、source-branch を指定してください" >&2
-            exit 1
-          }
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git config --global core.quotepath false
+        # 前回からの差分を取るので履歴が要る
+        if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+          git fetch --quiet --unshallow origin
         fi
-        echo "src=$SRC" >> "$GITHUB_OUTPUT"
-        if git ls-remote --exit-code --heads origin "$PDF" > /dev/null; then
-          git checkout "$PDF"
-          git fetch --unshallow origin "$PDF" || true
-        else
-          # 空のツリーの SHA を起点にすると、初回は全ての .qd が変換対象になる
-          git checkout --orphan "$PDF"
-          git rm -rf --quiet .
-          echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt
-          git add . && git commit --quiet -m "first commit"
-        fi
-        base=$(git show "$PDF:convertdone.txt")
-        # _ で始まるファイル(.include で読む分割用)は単体では変換しない
-        list() { git diff --name-only --diff-filter="$1" "$base" "$SRC" | grep -E '\.qd$' | grep -v '\(^\|/\)_' || true; }
-        deleted=$(list D)
-        if [ -n "$deleted" ]; then
-          printf '%s\n' "$deleted" | while read -r f; do rm -f "${f%.*}.pdf"; done
-          git add -A && git commit --quiet -m "remove" || true
-        fi
-        list MAR > modified.txt
-        if [ -s modified.txt ]; then
-          echo "status=success" >> "$GITHUB_OUTPUT"
-        else
-          rm -f modified.txt
+        OUT=${OUT%/}
+        case "$OUT" in
+          "" | . | /* | .. | ../* | */.. | */../*)
+            echo "output-dir にはリポジトリの中のフォルダを指定してください: '$OUT'" >&2
+            exit 1 ;;
+        esac
+        head=$(git rev-parse HEAD)
+        # 前回変換したコミット。無ければ (初回・フォルダを消したとき) 空のツリーから = 全部
+        base=$(cat "$OUT/.seisho" 2> /dev/null || true)
+        git cat-file -e "$base^{commit}" 2> /dev/null || base=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+        # リネームは削除 + 追加として扱い、旧名の PDF も消す。
+        # _ で始まるファイル (.include で読む分割用) と出力先の中は対象外
+        list() {
+          git diff --no-renames --name-only --diff-filter="$1" "$base" "$head" |
+            grep -E '\.qd$' | grep -v '\(^\|/\)_' | awk -v p="$OUT/" 'index($0, p) != 1' || true
+        }
+        list D > "$RUNNER_TEMP/seisho-deleted.txt"
+        list AM > "$RUNNER_TEMP/seisho-modified.txt"
+        echo "head=$head" >> "$GITHUB_OUTPUT"
+        echo "out=$OUT" >> "$GITHUB_OUTPUT"
+        [ -s "$RUNNER_TEMP/seisho-modified.txt" ] && echo "convert=true" >> "$GITHUB_OUTPUT"
+        if [ -s "$RUNNER_TEMP/seisho-modified.txt" ] || [ -s "$RUNNER_TEMP/seisho-deleted.txt" ]; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
         fi
     - name: resolve quarkdown version
       id: quarkdown
-      if: steps.check.outputs.status == 'success'
+      if: steps.list.outputs.convert == 'true'
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
@@ -97,47 +88,37 @@ runs:
         echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
     - name: cache quarkdown
       id: quarkdown-cache
-      if: steps.check.outputs.status == 'success'
+      if: steps.list.outputs.convert == 'true'
       uses: actions/cache@v6
       with:
-        # 本体(JRE同梱)・puppeteer・Chromeが全てこの下に入る
+        # 本体 (JRE 同梱) と chrome-headless-shell が全てこの下に入る
         path: ${{ runner.tool_cache }}/quarkdown
         key: quarkdown-${{ runner.os }}-${{ steps.quarkdown.outputs.version }}
     - name: install quarkdown
-      if: steps.check.outputs.status == 'success' && steps.quarkdown-cache.outputs.cache-hit != 'true'
+      if: steps.list.outputs.convert == 'true' && steps.quarkdown-cache.outputs.cache-hit != 'true'
       uses: quarkdown-labs/setup-quarkdown@v1
       with:
         quarkdown-version: ${{ steps.quarkdown.outputs.version }}
     - name: use cached quarkdown
-      if: steps.check.outputs.status == 'success' && steps.quarkdown-cache.outputs.cache-hit == 'true'
+      if: steps.list.outputs.convert == 'true' && steps.quarkdown-cache.outputs.cache-hit == 'true'
       shell: bash
       run: |
-        # setup-quarkdownが作る/usr/local/binのラッパーはキャッシュ対象外なので、
-        # ラッパーが設定する環境変数を張り直す。2.6以降はchrome-headless-shellを
-        # インストール先のlibに置き、その場所をQD_CHROME_PATHで渡す
+        # setup-quarkdown が作る /usr/local/bin のラッパーはキャッシュされないので、
+        # ラッパーが設定する環境変数を張り直す (2.6 以降は Chrome の場所を QD_CHROME_PATH で渡す)
         dir="$RUNNER_TOOL_CACHE/quarkdown"
         echo "$dir/bin" >> "$GITHUB_PATH"
-        chrome=$(find "$dir/lib" -type f -name chrome-headless-shell -perm -u+x 2>/dev/null | head -n 1)
+        chrome=$(find "$dir/lib" -type f -name chrome-headless-shell -perm -u+x 2> /dev/null | head -n 1)
         if [ -n "$chrome" ]; then
           echo "QD_CHROME_PATH=$chrome" >> "$GITHUB_ENV"
         fi
-        # 2.5以前(puppeteerでChromeを入れていた版)向け
-        echo "QD_NPM_PREFIX=$dir/lib" >> "$GITHUB_ENV"
-        echo "PUPPETEER_CACHE_DIR=$dir/lib/puppeteer_cache" >> "$GITHUB_ENV"
     - name: convert
-      if: steps.check.outputs.status == 'success'
+      if: steps.list.outputs.changed == 'true'
       shell: bash
       env:
-        SRC: ${{ steps.check.outputs.src }}
-        PDF: ${{ inputs.pdf-branch }}
+        OUT: ${{ steps.list.outputs.out }}
+        HEAD_SHA: ${{ steps.list.outputs.head }}
         SETUP: ${{ inputs.default-setup == 'true' && format('{0}/_setup.qd', github.action_path) || '' }}
       run: |
-        git checkout "$SRC"
-        git checkout -b quarkdown-pdf-tmp
-        # 元のフォルダ構造のまま、.qd と同じ名前の pdf を作る。
-        # Quarkdown は出力名の記号(全角のコロンや空白など)を - に置き換えるので、
-        # 一時ディレクトリに固定の名前で出してから元の名前へ移す。
-        # --pdf-no-sandbox は ubuntu ランナーでは AppArmor により Chrome の sandbox が使えないため
         while read -r f; do
           in=$f
           if [ -n "$SETUP" ]; then
@@ -145,41 +126,65 @@ runs:
             in="$(dirname "$f")/.seisho.$(basename "$f")"
             { cat "$SETUP"; echo; cat "$f"; } > "$in"
           fi
-          out=$(mktemp -d)
+          # Quarkdown は出力名の記号 (全角のコロンや空白など) を - に置き換えるので、
+          # 一時ディレクトリに固定の名前で出してから元の名前へ移す。
+          # --pdf-no-sandbox は ubuntu ランナーでは AppArmor により Chrome の sandbox が使えないため
+          tmp=$(mktemp -d)
           quarkdown c "$in" --pdf --strict --allow global-read --pdf-no-sandbox \
-            --out "$out" --out-name document
-          mv "$out/document.pdf" "${f%.*}.pdf"
-          rm -rf "$out"
+            --out "$tmp" --out-name document
           [ "$in" = "$f" ] || rm -f "$in"
-        done < modified.txt
-        git add . && git commit --quiet -m "tmp"
-        git checkout "$PDF"
-        git show quarkdown-pdf-tmp:modified.txt | sed 's/\.[^.]*$//' | while read -r f; do
-          git checkout quarkdown-pdf-tmp -- "$f.pdf"
+          mkdir -p "$OUT/$(dirname "$f")"
+          mv "$tmp/document.pdf" "$OUT/${f%.*}.pdf"
+          rm -rf "$tmp"
+        done < "$RUNNER_TEMP/seisho-modified.txt"
+        while read -r f; do
+          rm -f "$OUT/${f%.*}.pdf"
+        done < "$RUNNER_TEMP/seisho-deleted.txt"
+        [ -d "$OUT" ] && find "$OUT" -type d -empty -delete
+        mkdir -p "$OUT"
+        echo "$HEAD_SHA" > "$OUT/.seisho"
+    # コミットより先に送る。送れなかったときは .seisho を進めないので、次の実行でまた送る
+    - name: upload with rclone
+      if: steps.list.outputs.changed == 'true' && inputs.rclone-config != '' && inputs.rclone-remote != ''
+      shell: bash
+      env:
+        OUT: ${{ steps.list.outputs.out }}
+        RCLONE_CONF: ${{ inputs.rclone-config }}
+        REMOTE: ${{ inputs.rclone-remote }}
+      run: |
+        if ! command -v rclone > /dev/null; then
+          sudo apt-get update -qq && sudo apt-get install -y -qq rclone > /dev/null
+        fi
+        conf="$RUNNER_TEMP/seisho-rclone.conf"
+        trap 'rm -f "$conf"' EXIT
+        (umask 077 && printf '%s\n' "$RCLONE_CONF" > "$conf")
+        sed 's/\.qd$/.pdf/' "$RUNNER_TEMP/seisho-modified.txt" > "$RUNNER_TEMP/seisho-up.txt"
+        sed 's/\.qd$/.pdf/' "$RUNNER_TEMP/seisho-deleted.txt" > "$RUNNER_TEMP/seisho-rm.txt"
+        if [ -s "$RUNNER_TEMP/seisho-up.txt" ]; then
+          rclone copy --config "$conf" --files-from-raw "$RUNNER_TEMP/seisho-up.txt" "$OUT" "$REMOTE"
+        fi
+        if [ -s "$RUNNER_TEMP/seisho-rm.txt" ]; then
+          # 送り先に無いファイルは一覧に出ないだけなので、ここでの失敗は本物のエラー
+          rclone delete --config "$conf" --files-from-raw "$RUNNER_TEMP/seisho-rm.txt" "$REMOTE"
+        fi
+    - name: commit and push
+      if: steps.list.outputs.changed == 'true'
+      shell: bash
+      env:
+        OUT: ${{ steps.list.outputs.out }}
+      run: |
+        branch=$(git branch --show-current)
+        if [ -z "$branch" ]; then
+          echo "ブランチに乗っていないのでコミットできません。push か workflow_dispatch で呼んでください" >&2
+          exit 1
+        fi
+        git add -A -- "$OUT"
+        git diff --cached --quiet && exit 0
+        # GITHUB_TOKEN で push したコミットは次のワークフローを起動しない
+        git commit --quiet -m "PDF を更新する (seisho)"
+        for i in 1 2 3; do
+          git push --quiet origin "HEAD:refs/heads/$branch" && exit 0
+          # 間に別の push があったら取り込み直す (PDF とソースは別の場所なのでぶつからない)
+          git pull --quiet --rebase origin "$branch"
         done
-        git rev-parse "$SRC" > convertdone.txt
-        git add . && git commit --quiet -m "convert"
-    - name: push
-      shell: bash
-      env:
-        PDF: ${{ inputs.pdf-branch }}
-      run: |
-        if [ "$(git branch --show-current)" = "$PDF" ]; then
-          git push origin "HEAD:$PDF"
-        fi
-    # 作業ツリーを呼び出し前の状態に戻す。途中で失敗しても戻す。後に続く step と、
-    # action 自身の後処理 (uses: ./ で呼んだときは action.yml を作業ツリーから読み直す) のため
-    - name: restore working tree
-      if: always() && steps.init.outputs.orig-sha != ''
-      shell: bash
-      env:
-        ORIG: ${{ steps.init.outputs.orig }}
-        ORIG_SHA: ${{ steps.init.outputs.orig-sha }}
-      run: |
-        # 変換が途中で落ちたときに残る写しを消す
-        find . -name '.seisho.*.qd' -not -path './.git/*' -delete
-        if [ -n "$ORIG" ]; then
-          git checkout --quiet --force "$ORIG"
-        else
-          git checkout --quiet --force --detach "$ORIG_SHA"
-        fi
+        exit 1
