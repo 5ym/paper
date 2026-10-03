@@ -48,6 +48,11 @@ runs:
           git fetch --quiet --unshallow origin
         fi
         OUT=${OUT%/}
+        case "$OUT" in
+          "" | . | /* | .. | ../* | */.. | */../*)
+            echo "output-dir にはリポジトリの中のフォルダを指定してください: '$OUT'" >&2
+            exit 1 ;;
+        esac
         head=$(git rev-parse HEAD)
         # 前回変換したコミット。無ければ (初回・フォルダを消したとき) 空のツリーから = 全部
         base=$(cat "$OUT/.seisho" 2> /dev/null || true)
@@ -56,7 +61,7 @@ runs:
         # _ で始まるファイル (.include で読む分割用) と出力先の中は対象外
         list() {
           git diff --no-renames --name-only --diff-filter="$1" "$base" "$head" |
-            grep -E '\.qd$' | grep -v '\(^\|/\)_' | grep -v "^$OUT/" || true
+            grep -E '\.qd$' | grep -v '\(^\|/\)_' | awk -v p="$OUT/" 'index($0, p) != 1' || true
         }
         list D > "$RUNNER_TEMP/seisho-deleted.txt"
         list AM > "$RUNNER_TEMP/seisho-modified.txt"
@@ -138,6 +143,30 @@ runs:
         [ -d "$OUT" ] && find "$OUT" -type d -empty -delete
         mkdir -p "$OUT"
         echo "$HEAD_SHA" > "$OUT/.seisho"
+    # コミットより先に送る。送れなかったときは .seisho を進めないので、次の実行でまた送る
+    - name: upload with rclone
+      if: steps.list.outputs.changed == 'true' && inputs.rclone-config != '' && inputs.rclone-remote != ''
+      shell: bash
+      env:
+        OUT: ${{ steps.list.outputs.out }}
+        RCLONE_CONF: ${{ inputs.rclone-config }}
+        REMOTE: ${{ inputs.rclone-remote }}
+      run: |
+        if ! command -v rclone > /dev/null; then
+          sudo apt-get update -qq && sudo apt-get install -y -qq rclone > /dev/null
+        fi
+        conf="$RUNNER_TEMP/seisho-rclone.conf"
+        trap 'rm -f "$conf"' EXIT
+        (umask 077 && printf '%s\n' "$RCLONE_CONF" > "$conf")
+        sed 's/\.qd$/.pdf/' "$RUNNER_TEMP/seisho-modified.txt" > "$RUNNER_TEMP/seisho-up.txt"
+        sed 's/\.qd$/.pdf/' "$RUNNER_TEMP/seisho-deleted.txt" > "$RUNNER_TEMP/seisho-rm.txt"
+        if [ -s "$RUNNER_TEMP/seisho-up.txt" ]; then
+          rclone copy --config "$conf" --files-from-raw "$RUNNER_TEMP/seisho-up.txt" "$OUT" "$REMOTE"
+        fi
+        if [ -s "$RUNNER_TEMP/seisho-rm.txt" ]; then
+          # 送り先に無いファイルは一覧に出ないだけなので、ここでの失敗は本物のエラー
+          rclone delete --config "$conf" --files-from-raw "$RUNNER_TEMP/seisho-rm.txt" "$REMOTE"
+        fi
     - name: commit and push
       if: steps.list.outputs.changed == 'true'
       shell: bash
@@ -159,23 +188,3 @@ runs:
           git pull --quiet --rebase origin "$branch"
         done
         exit 1
-    - name: upload with rclone
-      if: steps.list.outputs.changed == 'true' && inputs.rclone-config != '' && inputs.rclone-remote != ''
-      shell: bash
-      env:
-        OUT: ${{ steps.list.outputs.out }}
-        RCLONE_CONF: ${{ inputs.rclone-config }}
-        REMOTE: ${{ inputs.rclone-remote }}
-      run: |
-        command -v rclone > /dev/null || curl -fsSL https://rclone.org/install.sh | sudo bash > /dev/null
-        conf="$RUNNER_TEMP/seisho-rclone.conf"
-        printf '%s\n' "$RCLONE_CONF" > "$conf"
-        sed 's/\.qd$/.pdf/' "$RUNNER_TEMP/seisho-modified.txt" > "$RUNNER_TEMP/seisho-up.txt"
-        sed 's/\.qd$/.pdf/' "$RUNNER_TEMP/seisho-deleted.txt" > "$RUNNER_TEMP/seisho-rm.txt"
-        if [ -s "$RUNNER_TEMP/seisho-up.txt" ]; then
-          rclone copy --config "$conf" --files-from-raw "$RUNNER_TEMP/seisho-up.txt" "$OUT" "$REMOTE"
-        fi
-        if [ -s "$RUNNER_TEMP/seisho-rm.txt" ]; then
-          rclone delete --config "$conf" --files-from-raw "$RUNNER_TEMP/seisho-rm.txt" "$REMOTE" || true
-        fi
-        rm -f "$conf"
