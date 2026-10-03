@@ -97,10 +97,18 @@ runs:
       if: steps.check.outputs.status == 'success' && steps.quarkdown-cache.outputs.cache-hit == 'true'
       shell: bash
       run: |
-        # setup-quarkdownが作る/usr/local/binのラッパーはキャッシュ対象外なので同じ環境変数を張り直す
-        echo "$RUNNER_TOOL_CACHE/quarkdown/bin" >> "$GITHUB_PATH"
-        echo "QD_NPM_PREFIX=$RUNNER_TOOL_CACHE/quarkdown/lib" >> "$GITHUB_ENV"
-        echo "PUPPETEER_CACHE_DIR=$RUNNER_TOOL_CACHE/quarkdown/lib/puppeteer_cache" >> "$GITHUB_ENV"
+        # setup-quarkdownが作る/usr/local/binのラッパーはキャッシュ対象外なので、
+        # ラッパーが設定する環境変数を張り直す。2.6以降はchrome-headless-shellを
+        # インストール先のlibに置き、その場所をQD_CHROME_PATHで渡す
+        dir="$RUNNER_TOOL_CACHE/quarkdown"
+        echo "$dir/bin" >> "$GITHUB_PATH"
+        chrome=$(find "$dir/lib" -type f -name chrome-headless-shell -perm -u+x 2>/dev/null | head -n 1)
+        if [ -n "$chrome" ]; then
+          echo "QD_CHROME_PATH=$chrome" >> "$GITHUB_ENV"
+        fi
+        # 2.5以前(puppeteerでChromeを入れていた版)向け
+        echo "QD_NPM_PREFIX=$dir/lib" >> "$GITHUB_ENV"
+        echo "PUPPETEER_CACHE_DIR=$dir/lib/puppeteer_cache" >> "$GITHUB_ENV"
     - name: convert
       if: steps.check.outputs.status == 'success'
       shell: bash
