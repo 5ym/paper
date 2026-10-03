@@ -27,8 +27,12 @@ runs:
   using: composite
   steps:
     - name: git config and fetch branch
+      id: init
       shell: bash
       run: |
+        # 最後に戻す先 (呼び出し前のブランチ。ブランチに乗っていなければコミット)
+        echo "orig=$(git branch --show-current || true)" >> "$GITHUB_OUTPUT"
+        echo "orig-sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "GitHub Action"
         git config --global core.quotepath false
@@ -47,6 +51,7 @@ runs:
             exit 1
           }
         fi
+        echo "src=$SRC" >> "$GITHUB_OUTPUT"
         if git ls-remote --exit-code --heads origin "$PDF" > /dev/null; then
           git checkout "$PDF"
           git fetch --unshallow origin "$PDF" || true
@@ -71,7 +76,6 @@ runs:
         else
           rm -f modified.txt
         fi
-        echo "src=$SRC" >> "$GITHUB_OUTPUT"
     - name: resolve quarkdown version
       id: quarkdown
       if: steps.check.outputs.status == 'success'
@@ -150,4 +154,18 @@ runs:
       run: |
         if [ "$(git branch --show-current)" = "$PDF" ]; then
           git push origin "HEAD:$PDF"
+        fi
+    # 作業ツリーを呼び出し前の状態に戻す。途中で失敗しても戻す。後に続く step と、
+    # action 自身の後処理 (uses: ./ で呼んだときは action.yml を作業ツリーから読み直す) のため
+    - name: restore working tree
+      if: always() && steps.init.outputs.orig-sha != ''
+      shell: bash
+      env:
+        ORIG: ${{ steps.init.outputs.orig }}
+        ORIG_SHA: ${{ steps.init.outputs.orig-sha }}
+      run: |
+        if [ -n "$ORIG" ]; then
+          git checkout --quiet --force "$ORIG"
+        else
+          git checkout --quiet --force --detach "$ORIG_SHA"
         fi
