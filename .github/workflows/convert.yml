@@ -3,7 +3,7 @@ name: qd to pdf
 
 on:
   push:
-    branches: [master]
+    branches: [m]
 
 permissions:
   contents: write
