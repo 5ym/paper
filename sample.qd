@@ -95,7 +95,7 @@ def fib(n):
 
 .mermaid
     flowchart TD
-        A([write source]) --> B[push to master]
+        A([write source]) --> B[push to m]
         B --> C{changed?}
         C -- yes --> D[update pdf branch]
         C -- no --> E([end])
