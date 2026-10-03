@@ -14,6 +14,10 @@ inputs:
     description: PDF を置くブランチ。無ければ作る
     required: false
     default: pdf
+  default-setup:
+    description: 既定の設定 (この Action の _setup.qd。A4・日本語フォントなど) を各文書の先頭に足す。文書の中で同じ関数を呼べば上書きできる
+    required: false
+    default: "true"
   quarkdown-major:
     description: 使う Quarkdown のメジャーバージョン。その系列の最新リリースを使う
     required: false
@@ -63,7 +67,7 @@ runs:
           git add . && git commit --quiet -m "first commit"
         fi
         base=$(git show "$PDF:convertdone.txt")
-        # _ で始まるファイル(_setup.qd など)は単体では変換しない
+        # _ で始まるファイル(.include で読む分割用)は単体では変換しない
         list() { git diff --name-only --diff-filter="$1" "$base" "$SRC" | grep -E '\.qd$' | grep -v '\(^\|/\)_' || true; }
         deleted=$(list D)
         if [ -n "$deleted" ]; then
@@ -126,6 +130,7 @@ runs:
       env:
         SRC: ${{ steps.check.outputs.src }}
         PDF: ${{ inputs.pdf-branch }}
+        SETUP: ${{ inputs.default-setup == 'true' && format('{0}/_setup.qd', github.action_path) || '' }}
       run: |
         git checkout "$SRC"
         git checkout -b quarkdown-pdf-tmp
@@ -134,11 +139,18 @@ runs:
         # 一時ディレクトリに固定の名前で出してから元の名前へ移す。
         # --pdf-no-sandbox は ubuntu ランナーでは AppArmor により Chrome の sandbox が使えないため
         while read -r f; do
+          in=$f
+          if [ -n "$SETUP" ]; then
+            # 既定の設定を先頭に足した写しを、相対パスが変わらないよう同じフォルダに作る
+            in="$(dirname "$f")/.seisho.$(basename "$f")"
+            { cat "$SETUP"; echo; cat "$f"; } > "$in"
+          fi
           out=$(mktemp -d)
-          quarkdown c "$f" --pdf --strict --allow global-read --pdf-no-sandbox \
+          quarkdown c "$in" --pdf --strict --allow global-read --pdf-no-sandbox \
             --out "$out" --out-name document
           mv "$out/document.pdf" "${f%.*}.pdf"
           rm -rf "$out"
+          [ "$in" = "$f" ] || rm -f "$in"
         done < modified.txt
         git add . && git commit --quiet -m "tmp"
         git checkout "$PDF"
@@ -164,6 +176,8 @@ runs:
         ORIG: ${{ steps.init.outputs.orig }}
         ORIG_SHA: ${{ steps.init.outputs.orig-sha }}
       run: |
+        # 変換が途中で落ちたときに残る写しを消す
+        find . -name '.seisho.*.qd' -not -path './.git/*' -delete
         if [ -n "$ORIG" ]; then
           git checkout --quiet --force "$ORIG"
         else
