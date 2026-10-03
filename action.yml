@@ -1,0 +1,133 @@
+name: Quarkdown to PDF branch
+description: リポジトリ内の .qd を Quarkdown で PDF にし、元のフォルダ構造のまま pdf ブランチへ置く (変更があったものだけ)
+author: 5ym
+branding:
+  icon: file-text
+  color: gray-dark
+
+inputs:
+  source-branch:
+    description: .qd を読むブランチ。省略時は push されたブランチ
+    required: false
+    default: ""
+  pdf-branch:
+    description: PDF を置くブランチ。無ければ作る
+    required: false
+    default: pdf
+  quarkdown-major:
+    description: 使う Quarkdown のメジャーバージョン。その系列の最新リリースを使う
+    required: false
+    default: "2"
+  token:
+    description: Quarkdown のリリースを調べるための GitHub のトークン
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: git config and fetch branch
+      shell: bash
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "GitHub Action"
+        git config --global core.quotepath false
+        git fetch --no-tags --prune --depth=1
+    - name: init pdf branch, remove deleted, list modified
+      id: check
+      shell: bash
+      env:
+        SRC: ${{ inputs.source-branch || github.ref_name }}
+        PDF: ${{ inputs.pdf-branch }}
+      run: |
+        if git ls-remote --exit-code --heads origin "$PDF" > /dev/null; then
+          git checkout "$PDF"
+          git fetch --unshallow origin "$PDF" || true
+        else
+          # 空のツリーの SHA を起点にすると、初回は全ての .qd が変換対象になる
+          git checkout --orphan "$PDF"
+          git rm -rf --quiet .
+          echo 4b825dc642cb6eb9a060e54bf8d69288fbee4904 > convertdone.txt
+          git add . && git commit --quiet -m "first commit"
+        fi
+        base=$(git show "$PDF:convertdone.txt")
+        # _ で始まるファイル(_setup.qd など)は単体では変換しない
+        list() { git diff --name-only --diff-filter="$1" "$base" "$SRC" | grep -E '\.qd$' | grep -v '\(^\|/\)_' || true; }
+        deleted=$(list D)
+        if [ -n "$deleted" ]; then
+          printf '%s\n' "$deleted" | while read -r f; do rm -f "${f%.*}.pdf"; done
+          git add -A && git commit --quiet -m "remove" || true
+        fi
+        list MAR > modified.txt
+        if [ -s modified.txt ]; then
+          echo "status=success" >> "$GITHUB_OUTPUT"
+        else
+          rm -f modified.txt
+        fi
+        echo "src=$SRC" >> "$GITHUB_OUTPUT"
+    - name: resolve quarkdown version
+      id: quarkdown
+      if: steps.check.outputs.status == 'success'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        MAJOR: ${{ inputs.quarkdown-major }}
+      run: |
+        tag=$(gh api "repos/iamgio/quarkdown/releases?per_page=100" \
+          --jq "map(select(.draft == false and .prerelease == false and (.tag_name | startswith(\"v$MAJOR.\")))) | .[0].tag_name")
+        if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+          echo "quarkdown v$MAJOR.x のリリースが見つかりません" >&2
+          exit 1
+        fi
+        echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+    - name: cache quarkdown
+      id: quarkdown-cache
+      if: steps.check.outputs.status == 'success'
+      uses: actions/cache@v6
+      with:
+        # 本体(JRE同梱)・puppeteer・Chromeが全てこの下に入る
+        path: ${{ runner.tool_cache }}/quarkdown
+        key: quarkdown-${{ runner.os }}-${{ steps.quarkdown.outputs.version }}
+    - name: install quarkdown
+      if: steps.check.outputs.status == 'success' && steps.quarkdown-cache.outputs.cache-hit != 'true'
+      uses: quarkdown-labs/setup-quarkdown@v1
+      with:
+        quarkdown-version: ${{ steps.quarkdown.outputs.version }}
+    - name: use cached quarkdown
+      if: steps.check.outputs.status == 'success' && steps.quarkdown-cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: |
+        # setup-quarkdownが作る/usr/local/binのラッパーはキャッシュ対象外なので同じ環境変数を張り直す
+        echo "$RUNNER_TOOL_CACHE/quarkdown/bin" >> "$GITHUB_PATH"
+        echo "QD_NPM_PREFIX=$RUNNER_TOOL_CACHE/quarkdown/lib" >> "$GITHUB_ENV"
+        echo "PUPPETEER_CACHE_DIR=$RUNNER_TOOL_CACHE/quarkdown/lib/puppeteer_cache" >> "$GITHUB_ENV"
+    - name: convert
+      if: steps.check.outputs.status == 'success'
+      shell: bash
+      env:
+        SRC: ${{ steps.check.outputs.src }}
+        PDF: ${{ inputs.pdf-branch }}
+      run: |
+        git checkout "$SRC"
+        git checkout -b quarkdown-pdf-tmp
+        # 元のフォルダ構造のままpdfを作る。--pdf-no-sandboxはubuntuランナーでは
+        # AppArmorによりChromeのsandboxが使えないため
+        while read -r f; do
+          quarkdown c "$f" --pdf --strict --allow global-read --pdf-no-sandbox \
+            --out "$(dirname "$f")" --out-name "$(basename "${f%.*}")"
+        done < modified.txt
+        git add . && git commit --quiet -m "tmp"
+        git checkout "$PDF"
+        git show quarkdown-pdf-tmp:modified.txt | sed 's/\.[^.]*$//' | while read -r f; do
+          git checkout quarkdown-pdf-tmp -- "$f.pdf"
+        done
+        echo "$GITHUB_SHA" > convertdone.txt
+        git add . && git commit --quiet -m "convert"
+    - name: push
+      shell: bash
+      env:
+        PDF: ${{ inputs.pdf-branch }}
+      run: |
+        if [ "$(git branch --show-current)" = "$PDF" ]; then
+          git push origin "HEAD:$PDF"
+        fi
