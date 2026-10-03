@@ -110,11 +110,16 @@ runs:
       run: |
         git checkout "$SRC"
         git checkout -b quarkdown-pdf-tmp
-        # 元のフォルダ構造のままpdfを作る。--pdf-no-sandboxはubuntuランナーでは
-        # AppArmorによりChromeのsandboxが使えないため
+        # 元のフォルダ構造のまま、.qd と同じ名前の pdf を作る。
+        # Quarkdown は出力名の記号(全角のコロンや空白など)を - に置き換えるので、
+        # 一時ディレクトリに固定の名前で出してから元の名前へ移す。
+        # --pdf-no-sandbox は ubuntu ランナーでは AppArmor により Chrome の sandbox が使えないため
         while read -r f; do
+          out=$(mktemp -d)
           quarkdown c "$f" --pdf --strict --allow global-read --pdf-no-sandbox \
-            --out "$(dirname "$f")" --out-name "$(basename "${f%.*}")"
+            --out "$out" --out-name document
+          mv "$out/document.pdf" "${f%.*}.pdf"
+          rm -rf "$out"
         done < modified.txt
         git add . && git commit --quiet -m "tmp"
         git checkout "$PDF"
