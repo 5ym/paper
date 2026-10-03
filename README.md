@@ -13,6 +13,9 @@ on:
 permissions:
   contents: write
 
+# 続けて push したときに pdf ブランチへの push がぶつからないように
+concurrency: pdf
+
 jobs:
   pdf:
     runs-on: ubuntu-latest
@@ -27,6 +30,7 @@ jobs:
 | `pdf-branch` | `pdf` | PDF を置くブランチ。無ければ作る |
 | `quarkdown-major` | `2` | この系列の最新リリースを使う |
 
+- `push` と `workflow_dispatch` で使えます (`pull_request` には対応していません)。
 - `.qd` と同じフォルダ構造・同じ名前で `pdf` ブランチに PDF を置きます。変更があったものだけ変換し、消した `.qd` の PDF は消します。リネームした場合は旧名の PDF が残ります。
 - `_` で始まるファイル (`_setup.qd` など) は単体では変換しません。共通設定や分割用に使います。
 - 全部作り直したいときは `pdf` ブランチを消してから push します。

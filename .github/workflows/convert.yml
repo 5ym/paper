@@ -8,6 +8,8 @@ on:
 permissions:
   contents: write
 
+concurrency: pdf
+
 jobs:
   pdf:
     runs-on: ubuntu-latest

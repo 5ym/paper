@@ -40,6 +40,8 @@ runs:
         SRC: ${{ inputs.source-branch || github.ref_name }}
         PDF: ${{ inputs.pdf-branch }}
       run: |
+        # source-branch にチェックアウトしていないブランチを指定されたときは origin から作る
+        git rev-parse --verify -q "refs/heads/$SRC" > /dev/null || git branch "$SRC" "origin/$SRC"
         if git ls-remote --exit-code --heads origin "$PDF" > /dev/null; then
           git checkout "$PDF"
           git fetch --unshallow origin "$PDF" || true
@@ -134,7 +136,7 @@ runs:
         git show quarkdown-pdf-tmp:modified.txt | sed 's/\.[^.]*$//' | while read -r f; do
           git checkout quarkdown-pdf-tmp -- "$f.pdf"
         done
-        echo "$GITHUB_SHA" > convertdone.txt
+        git rev-parse "$SRC" > convertdone.txt
         git add . && git commit --quiet -m "convert"
     - name: push
       shell: bash
