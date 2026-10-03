@@ -40,6 +40,8 @@ runs:
         SRC: ${{ inputs.source-branch || github.ref_name }}
         PDF: ${{ inputs.pdf-branch }}
       run: |
+        # 途中で失敗しても restore で戻せるように、最初に出しておく
+        echo "src=$SRC" >> "$GITHUB_OUTPUT"
         # source-branch にチェックアウトしていないブランチを指定されたときは origin から作る
         if ! git rev-parse --verify -q "refs/heads/$SRC" > /dev/null; then
           git branch "$SRC" "origin/$SRC" 2> /dev/null || {
@@ -71,7 +73,6 @@ runs:
         else
           rm -f modified.txt
         fi
-        echo "src=$SRC" >> "$GITHUB_OUTPUT"
     - name: resolve quarkdown version
       id: quarkdown
       if: steps.check.outputs.status == 'success'
